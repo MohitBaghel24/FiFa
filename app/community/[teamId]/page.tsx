@@ -1,263 +1,297 @@
 "use client";
 
-import React, { useState } from 'react';
-import { Search, MoreVertical, Plus, Image as ImageIcon, Smile, Play, Flame, ChevronLeft } from 'lucide-react';
-import Link from 'next/link';
+import React, { useState, use } from "react";
+import Link from "next/link";
+import { Search, Menu, Plus, Image as ImageIcon, Smile, Send, Flame, Info } from "lucide-react";
 
-export default function CommunityPage() {
-  const [message, setMessage] = useState('');
+export default function CommunityChatPage({ params }: { params: Promise<{ teamId: string }> | { teamId: string } }) {
+  // Handle both Next.js 14 and Next.js 15+ behavior for params gracefully
+  const resolvedParams = params instanceof Promise ? use(params) : params;
+  const teamId = resolvedParams.teamId?.toLowerCase() || "global";
+  const [message, setMessage] = useState("");
 
-  // Mock Data
-  const regions = [
-    { id: 'brazil', name: 'BRAZIL FANS', flag: '🇧🇷', online: '4,521', active: true },
-    { id: 'argentina', name: 'ARGENTINA FANS', flag: '🇦🇷', online: '3,892', active: false },
-    { id: 'france', name: 'FRANCE FANS', flag: '🇫🇷', online: '2,105', active: false },
-    { id: 'england', name: 'ENGLAND FANS', flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿', online: '5,022', active: false },
-    { id: 'usa', name: 'USA FANS', flag: '🇺🇸', online: '1,433', active: false },
-  ];
+  const allTeams: Record<string, { name: string, flag: string, img: string, online: number }> = {
+    brazil: { name: "BRAZIL FANS", flag: "🇧🇷", img: "br.png", online: 4521 },
+    argentina: { name: "ARGENTINA FANS", flag: "🇦🇷", img: "ar.png", online: 3204 },
+    france: { name: "FRANCE FANS", flag: "🇫🇷", img: "fr.png", online: 2891 },
+    england: { name: "ENGLAND FANS", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", img: "gb-eng.png", online: 3102 },
+    global: { name: "GLOBAL CHAT", flag: "🌍", img: "un.png", online: 12450 },
+  };
 
-  const operatives = [
-    { rank: 1, name: 'VINI_FAN_99', xp: '124,500 XP', avatar: 'https://i.pravatar.cc/150?u=1' },
-    { rank: 2, name: 'PELE_KING', xp: '98,200 XP', avatar: 'https://i.pravatar.cc/150?u=2' },
-    { rank: 3, name: 'JOGA_BONITO', xp: '87,150 XP', avatar: 'https://i.pravatar.cc/150?u=3' },
-  ];
+  const activeTeam = allTeams[teamId] || {
+    name: `${teamId.toUpperCase()} FANS`,
+    flag: "🏳️",
+    img: "un.png",
+    online: 124,
+  };
 
-  const chatHistory = [
-    { type: 'separator', text: 'TODAY - MATCH DAY' },
-    { type: 'message', id: 1, user: 'CARLOS_BR', avatar: 'https://i.pravatar.cc/150?u=4', time: '18:42', content: 'Lineups are out! We are playing 4-3-3 today!', isOwn: false, flag: '🇧🇷' },
-    { type: 'message', id: 2, user: 'THIAGO_SILVA_FAN', avatar: 'https://i.pravatar.cc/150?u=5', time: '18:44', content: 'Defense needs to be solid. Expecting a tough match.', isOwn: false, flag: '🇧🇷' },
-    { type: 'system', id: 3, content: '⚽ KICKOFF! THE MATCH HAS STARTED.' },
-    { type: 'message', id: 4, user: 'PRO_PLAYER_01', avatar: 'https://i.pravatar.cc/150?u=me', time: '18:55', content: 'They are pressing so high right now...', isOwn: true, flag: '🇧🇷' },
-    { type: 'system', id: 5, content: '⚽ GOAL SCORED BY BRAZIL! (24\')' },
-    { type: 'message', id: 6, user: 'CARLOS_BR', avatar: 'https://i.pravatar.cc/150?u=4', time: '19:06', content: 'VAMOOOSSSS!!! WHAT A STRIKE! 🔥', isOwn: false, flag: '🇧🇷' },
+  const communities = Object.keys(allTeams).map(key => ({
+    name: allTeams[key].name,
+    flag: allTeams[key].flag,
+    online: allTeams[key].online,
+    slug: key,
+    active: key === teamId
+  }));
+
+  const mockMessages = [
+    {
+      id: 5, type: "message", user: "Alex_Silva", avatar: "A", flag: "🇧🇷",
+      time: "14:32", text: "Vini Jr is absolutely tearing it up! 🔥", isOwn: false,
+    },
+    {
+      id: 4, type: "message", user: "PRO_PLAYER_01", avatar: "P", flag: "🌍",
+      time: "14:34", text: "We need more pressure in the midfield. They are getting too much space.", isOwn: true,
+    },
+    { id: 3, type: "event", text: `⚽ GOAL SCORED BY ${activeTeam.name.replace(' FANS', '')}! (24')` },
+    {
+      id: 2, type: "message", user: "NeymarFan99", avatar: "N", flag: "🇧🇷",
+      time: "14:36", text: "VAMOOOOOS!!! What a finish! 🏆", isOwn: false,
+    },
+    {
+      id: 1, type: "message", user: "TacticalGuru", avatar: "T", flag: "🇬🇧",
+      time: "14:38", text: "That transition was textbook. Perfect counter-attack.", isOwn: false,
+    }
   ];
 
   return (
-    <div className="flex h-[calc(100vh-64px)] w-full overflow-hidden bg-bg-primary">
+    <div className="flex h-[calc(100vh-164px)] md:h-[calc(100vh-100px)] bg-bg-primary overflow-hidden">
       
-      {/* LEFT SIDEBAR (Hidden on mobile) */}
-      <div className="hidden md:flex w-[240px] flex-col border-r border-border-color shrink-0 bg-bg-primary h-full">
+      {/* LEFT SIDEBAR (Desktop) */}
+      <div className="hidden md:flex flex-col w-[240px] border-r border-border-color bg-bg-secondary flex-shrink-0">
         <div className="p-4 border-b border-border-color">
-          <span className="text-[10px] uppercase text-text-secondary tracking-widest font-bold">GLOBAL REGIONS</span>
+          <h3 className="text-text-secondary text-[10px] font-bold tracking-widest uppercase">
+            Global Regions
+          </h3>
         </div>
         
-        <div className="flex-1 overflow-y-auto py-2">
-          {regions.map((region) => (
-            <div 
-              key={region.id} 
-              className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
-                region.active 
-                  ? 'bg-[#1C2333] border-l-2 border-accent' 
-                  : 'border-l-2 border-transparent hover:bg-bg-secondary'
+        <div className="flex-1 overflow-y-auto py-2 scrollbar-hide">
+          {communities.map((comm) => (
+            <Link
+              key={comm.slug}
+              href={`/community/${comm.slug}`}
+              className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors no-underline ${
+                comm.active
+                  ? "bg-accent/10 border-l-2 border-accent"
+                  : "hover:bg-bg-card border-l-2 border-transparent"
               }`}
             >
-              <div className="flex items-center gap-3">
-                <span className="text-xl">{region.flag}</span>
-                <span className={`text-xs font-bold uppercase tracking-wide ${region.active ? 'text-accent' : 'text-text-primary'}`}>
-                  {region.name}
+              <span className="text-xl">{comm.flag}</span>
+              <div className="flex flex-col">
+                <span className={`text-xs font-bold tracking-wide ${comm.active ? "text-accent" : "text-white"}`}>
+                  {comm.name}
                 </span>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                  <span className="text-[10px] text-text-secondary font-mono">
+                    {comm.online}
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className={`w-1.5 h-1.5 rounded-full ${region.active ? 'bg-accent shadow-[0_0_5px_#00FF87]' : 'bg-text-muted'}`}></span>
-                {region.active && <span className="text-[9px] font-mono text-text-secondary">{region.online}</span>}
-              </div>
-            </div>
+            </Link>
           ))}
         </div>
-        
-        {/* User Profile Bottom */}
-        <div className="p-4 border-t border-border-color bg-[#161B22]">
+
+        <div className="p-4 border-t border-border-color bg-bg-card">
           <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-full border border-border-color overflow-hidden bg-bg-card shrink-0">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="https://i.pravatar.cc/150?u=me" alt="User" className="w-full h-full object-cover" />
+            <div className="w-10 h-10 rounded-full bg-accent/20 flex items-center justify-center text-accent font-bold border border-accent/50">
+              P
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-bold text-white uppercase tracking-wider">PRO_PLAYER_01</span>
-              <span className="text-[9px] text-text-muted font-mono uppercase">Elite Tier</span>
+              <span className="text-white text-xs font-bold">PRO_PLAYER_01</span>
+              <span className="text-accent text-[10px] font-mono tracking-widest">ELITE TIER</span>
             </div>
           </div>
-          <button className="w-full btn-outline !py-2 !px-3 text-[10px] flex items-center justify-center gap-2 border-accent text-accent hover:bg-accent-glow">
-            <Plus size={14} /> NEW CHANNEL
+          <button className="w-full py-2 border border-accent text-accent text-[10px] font-bold tracking-[0.1em] rounded uppercase hover:bg-accent hover:text-bg-primary transition-colors">
+            + New Channel
           </button>
         </div>
       </div>
 
       {/* CENTER CHAT AREA */}
-      <div className="flex-1 flex flex-col h-full bg-bg-secondary relative border-r border-border-color min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-bg-primary relative border-r border-border-color">
         
-        {/* Chat Header */}
-        <div className="h-16 px-4 md:px-6 flex items-center justify-between border-b border-border-color shrink-0 bg-[#161B22] shadow-sm z-10">
-          <div className="flex items-center gap-3 md:gap-4">
-            {/* Mobile Back button */}
-            <Link href="/" className="md:hidden text-text-secondary hover:text-white">
-              <ChevronLeft size={24} />
-            </Link>
-            
-            <div className="w-10 h-10 md:w-[44px] md:h-[44px] rounded-full overflow-hidden border border-border-color shrink-0 flex items-center justify-center bg-bg-card text-2xl shadow-[0_0_10px_rgba(0,0,0,0.5)]">
-              🇧🇷
-            </div>
-            
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <h2 className="text-sm md:text-base font-orbitron font-bold text-white uppercase tracking-wider">BRAZIL FANS</h2>
-                <div className="hidden sm:flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-accent-glow border border-border-accent">
-                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse shadow-[0_0_5px_#00FF87]"></span>
-                  <span className="text-[9px] font-mono text-accent font-bold">4,521 ONLINE</span>
-                </div>
+        {/* Header */}
+        <div className="h-[72px] border-b border-border-color bg-bg-secondary/50 backdrop-blur-md flex items-center justify-between px-4 lg:px-6 flex-shrink-0 z-10">
+          <div className="flex items-center gap-3">
+            {activeTeam.img !== "un.png" ? (
+              <img
+                src={`https://flagcdn.com/w80/${activeTeam.img}`}
+                alt={activeTeam.name}
+                className="w-10 h-10 lg:w-[48px] lg:h-[48px] rounded-full object-cover border-2 border-[#30363D]"
+              />
+            ) : (
+              <div className="w-10 h-10 lg:w-[48px] lg:h-[48px] rounded-full border-2 border-[#30363D] bg-bg-card flex items-center justify-center text-xl">
+                {activeTeam.flag}
               </div>
-              <span className="text-[10px] font-mono text-text-muted">PING: 12ms • SECURE CONNECTION</span>
+            )}
+            <div className="flex flex-col">
+              <h2 className="text-white text-sm lg:text-base font-orbitron font-bold uppercase tracking-wider m-0 leading-tight">
+                {activeTeam.name}
+              </h2>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
+                  <span className="text-accent text-[10px] font-mono">{activeTeam.online.toLocaleString()} ONLINE</span>
+                </span>
+                <span className="text-text-secondary text-[10px] font-mono hidden sm:inline">| PING: 12ms</span>
+              </div>
             </div>
           </div>
           
           <div className="flex items-center gap-4 text-text-secondary">
-            <button className="hover:text-accent transition-colors"><Search size={20} /></button>
-            <button className="hover:text-accent transition-colors"><MoreVertical size={20} /></button>
+            <button className="hover:text-white transition-colors">
+              <Search size={20} />
+            </button>
+            <button className="hover:text-white transition-colors md:hidden">
+              <Info size={20} />
+            </button>
+            <button className="hover:text-white transition-colors">
+              <Menu size={20} />
+            </button>
           </div>
         </div>
-        
+
         {/* Chat Messages */}
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col gap-6">
-          {chatHistory.map((item, index) => {
-            if (item.type === 'separator') {
+        <div className="flex-1 overflow-y-auto p-4 lg:p-6 flex flex-col-reverse gap-6">
+          {mockMessages.map((msg) => {
+            if (msg.type === "event") {
               return (
-                <div key={index} className="flex justify-center my-2">
-                  <div className="px-3 py-1 rounded-full bg-bg-card border border-border-color">
-                    <span className="text-[9px] uppercase tracking-widest text-text-muted font-bold">{item.text}</span>
+                <div key={msg.id} className="flex justify-center my-2">
+                  <div className="border border-accent text-accent bg-accent/10 px-4 py-1.5 rounded-full text-[10px] font-bold tracking-widest shadow-[0_0_10px_rgba(0,255,135,0.2)]">
+                    {msg.text}
                   </div>
                 </div>
               );
             }
-            
-            if (item.type === 'system') {
-              return (
-                <div key={index} className="flex justify-center my-1">
-                  <div className="px-4 py-1.5 rounded-full bg-accent-glow border border-accent shadow-[0_0_10px_rgba(0,255,135,0.1)]">
-                    <span className="text-[10px] uppercase tracking-wider text-accent font-bold">{item.content}</span>
+
+            return (
+              <div key={msg.id} className={`flex flex-col ${msg.isOwn ? "items-end" : "items-start"}`}>
+                <div className={`flex items-center gap-2 mb-1.5 ${msg.isOwn ? "flex-row-reverse" : "flex-row"}`}>
+                  <div className="w-6 h-6 rounded-full bg-bg-card border border-[#30363D] flex items-center justify-center text-[10px] font-bold text-white">
+                    {msg.avatar}
                   </div>
+                  <span className="text-accent text-xs font-bold">{msg.user}</span>
+                  <span className="text-[10px]">{msg.flag}</span>
+                  <span className="text-text-muted text-[10px] font-mono">{msg.time}</span>
                 </div>
-              );
-            }
-            
-            if (item.type === 'message') {
-              return (
-                <div key={index} className={`flex gap-3 w-full max-w-[85%] ${item.isOwn ? 'self-end flex-row-reverse' : 'self-start'}`}>
-                  <div className="w-8 h-8 rounded-full overflow-hidden border border-border-color shrink-0 mt-1">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={item.avatar} alt="User" className="w-full h-full object-cover" />
-                  </div>
-                  
-                  <div className={`flex flex-col ${item.isOwn ? 'items-end' : 'items-start'}`}>
-                    <div className={`flex items-center gap-2 mb-1.5 ${item.isOwn ? 'flex-row-reverse' : ''}`}>
-                      <span className={`text-xs font-bold ${item.isOwn ? 'text-white' : 'text-accent'}`}>{item.user}</span>
-                      <span className="text-[10px]">{item.flag}</span>
-                      <span className="text-[10px] text-text-muted font-mono">{item.time}</span>
-                    </div>
-                    
-                    <div className={`p-3 text-sm leading-relaxed ${
-                      item.isOwn 
-                        ? 'bg-accent/10 border border-accent/20 text-[#00FF87] rounded-[12px_12px_0_12px]' 
-                        : 'bg-[#1C2333] border border-[#30363D] text-white rounded-[12px_12px_12px_0]'
-                    }`}>
-                      {item.content}
-                    </div>
-                  </div>
+                <div
+                  className={`px-4 py-3 max-w-[85%] sm:max-w-[75%] lg:max-w-[65%] text-sm leading-relaxed shadow-sm ${
+                    msg.isOwn
+                      ? "bg-accent/10 text-white rounded-[16px_16px_0_16px] border border-accent/20"
+                      : "bg-[#1C2333] text-[#E6EDF3] rounded-[16px_16px_16px_0] border border-[#30363D]"
+                  }`}
+                >
+                  {msg.text}
                 </div>
-              );
-            }
-            
-            return null;
+              </div>
+            );
           })}
+          
+          <div className="flex justify-center my-4">
+            <span className="text-text-muted text-[10px] font-bold tracking-widest uppercase">
+              TODAY - MATCH DAY
+            </span>
+          </div>
         </div>
-        
-        {/* Bottom Input Bar */}
-        <div className="p-4 border-t border-border-color bg-[#161B22] shrink-0">
-          <div className="flex items-center gap-2 md:gap-3">
-            <button className="w-10 h-10 rounded-full flex items-center justify-center bg-bg-card border border-border-color text-text-secondary hover:text-white hover:border-text-secondary transition-all shrink-0">
+
+        {/* Input Bar */}
+        <div className="p-3 lg:p-4 bg-[#161B22] border-t border-border-color flex-shrink-0 z-10">
+          <div className="flex items-center gap-2 lg:gap-3 bg-bg-primary border border-[#30363D] rounded-xl p-1 lg:p-1.5 pr-2 focus-within:border-accent/50 transition-colors">
+            <button className="p-2 text-text-secondary hover:text-white transition-colors flex-shrink-0">
               <Plus size={20} />
             </button>
-            <button className="hidden sm:flex w-10 h-10 rounded-full items-center justify-center bg-bg-card border border-border-color text-text-secondary hover:text-white hover:border-text-secondary transition-all shrink-0">
-              <ImageIcon size={18} />
+            <button className="p-2 text-text-secondary hover:text-white transition-colors hidden sm:block flex-shrink-0">
+              <ImageIcon size={20} />
             </button>
             
-            <div className="flex-1 relative flex items-center">
-              <input 
-                type="text" 
-                placeholder="Transmit message to BRAZIL FANS..."
-                className="w-full bg-bg-card border border-border-color rounded-full h-10 pl-4 pr-10 text-sm text-white focus:outline-none focus:border-accent placeholder:text-text-muted transition-colors"
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-              <button className="absolute right-3 text-text-muted hover:text-accent transition-colors">
-                <Smile size={18} />
-              </button>
-            </div>
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder={`Transmit message to ${activeTeam.name}...`}
+              className="flex-1 bg-transparent border-none text-white text-sm px-2 focus:outline-none min-w-0"
+            />
             
-            <button className="h-10 px-4 md:px-6 rounded-full bg-accent text-bg-primary font-bold text-[10px] md:text-xs uppercase tracking-widest flex items-center gap-2 hover:bg-accent-dim hover:shadow-[0_0_15px_rgba(0,255,135,0.4)] transition-all shrink-0">
-              <span className="hidden sm:inline">SEND</span> <Play size={14} className="fill-current" />
+            <button className="p-2 text-text-secondary hover:text-white transition-colors flex-shrink-0">
+              <Smile size={20} />
+            </button>
+            <button 
+              className={`flex items-center gap-1.5 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg ml-1 font-bold text-[11px] tracking-wider uppercase transition-colors flex-shrink-0 ${
+                message.trim() ? "bg-accent text-bg-primary shadow-[0_0_15px_rgba(0,255,135,0.3)]" : "bg-bg-card text-text-muted"
+              }`}
+            >
+              <span className="hidden sm:inline">SEND</span>
+              <Send size={14} className={message.trim() ? "" : "opacity-50"} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* RIGHT SIDEBAR (Desktop Only) */}
-      <div className="hidden lg:flex w-[280px] flex-col bg-bg-primary h-full overflow-y-auto p-5 gap-8 shrink-0">
-        
-        {/* Telemetry */}
-        <div className="flex flex-col gap-3 mt-2">
-          <span className="text-[10px] uppercase text-text-secondary tracking-widest font-bold">TELEMETRY</span>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-[#1C2333] border border-border-color rounded-lg p-3 flex flex-col gap-1 text-center">
-              <span className="text-text-muted text-[9px] uppercase tracking-widest">Total Fans</span>
-              <span className="font-orbitron font-bold text-white text-lg">1.2M</span>
+      {/* RIGHT SIDEBAR (Desktop) */}
+      <div className="hidden lg:flex flex-col w-[280px] bg-bg-secondary flex-shrink-0 overflow-y-auto scrollbar-hide">
+        <div className="p-6">
+          {/* TELEMETRY Section */}
+          <h3 className="text-text-secondary text-[10px] font-bold tracking-widest uppercase mb-4 border-b border-border-color pb-2">
+            TELEMETRY
+          </h3>
+          <div className="flex gap-3 mb-8">
+            <div className="flex-1 bg-bg-card border border-border-color rounded-lg p-3 text-center">
+              <div className="text-xl font-orbitron font-bold text-white mb-1">1.2M</div>
+              <div className="text-[9px] text-text-muted tracking-widest uppercase">Total Fans</div>
             </div>
-            <div className="bg-[#1C2333] border border-border-color rounded-lg p-3 flex flex-col gap-1 text-center">
-              <span className="text-text-muted text-[9px] uppercase tracking-widest">Founded</span>
-              <span className="font-orbitron font-bold text-white text-lg">2021</span>
+            <div className="flex-1 bg-bg-card border border-border-color rounded-lg p-3 text-center">
+              <div className="text-xl font-orbitron font-bold text-white mb-1">2021</div>
+              <div className="text-[9px] text-text-muted tracking-widest uppercase">Founded</div>
             </div>
           </div>
-        </div>
 
-        {/* Pinned Intel */}
-        <div className="flex flex-col gap-3">
-          <span className="text-[10px] uppercase text-text-secondary tracking-widest font-bold">PINNED INTEL</span>
-          <div className="bg-[#161B22] border border-border-color border-l-2 border-l-accent rounded-lg p-4 shadow-[0_4px_15px_rgba(0,0,0,0.2)]">
-            <div className="badge-green inline-block !text-[8px] mb-3">MATCH PREVIEW</div>
-            <p className="text-xs text-text-primary leading-relaxed mb-4">
-              Tactical breakdown for tonight&apos;s clash. High press expected from the midfield. Keep comms clear during the first 15 mins.
+          {/* PINNED INTEL Section */}
+          <h3 className="text-text-secondary text-[10px] font-bold tracking-widest uppercase mb-4 border-b border-border-color pb-2">
+            PINNED INTEL
+          </h3>
+          <div className="bg-bg-card border border-border-color border-l-2 border-l-accent rounded-r-lg p-4 mb-8">
+            <div className="inline-block bg-accent/10 text-accent text-[9px] font-bold px-2 py-0.5 rounded mb-2 tracking-wider">
+              MATCH PREVIEW
+            </div>
+            <p className="text-white text-xs leading-relaxed mb-3">
+              Tactical breakdown: How {activeTeam.name.replace(' FANS', '')} plans to dismantle the opposition&apos;s low block using width and quick transitions.
             </p>
-            <Link href="#" className="text-accent text-[10px] font-bold uppercase tracking-widest hover:underline flex items-center gap-1">
-              READ FULL REPORT <ChevronLeft className="rotate-180" size={12} />
-            </Link>
+            <span className="text-accent text-[10px] font-bold tracking-widest uppercase hover:underline cursor-pointer">
+              Read Full Report →
+            </span>
           </div>
-        </div>
 
-        {/* Top Operatives */}
-        <div className="flex flex-col gap-3">
-          <span className="text-[10px] uppercase text-text-secondary tracking-widest font-bold">TOP OPERATIVES TODAY</span>
-          <div className="flex flex-col gap-2">
-            {operatives.map((op, i) => (
-              <div key={i} className="flex items-center justify-between p-2 rounded-lg hover:bg-bg-secondary transition-colors group cursor-pointer border border-transparent hover:border-border-color">
+          {/* TOP OPERATIVES TODAY Section */}
+          <h3 className="text-text-secondary text-[10px] font-bold tracking-widest uppercase mb-4 border-b border-border-color pb-2">
+            TOP OPERATIVES TODAY
+          </h3>
+          <div className="flex flex-col gap-3">
+            {[
+              { rank: 1, name: "ViniMaster99", avatar: "V", xp: "14.2K", icon: <Flame size={14} className="text-accent" /> },
+              { rank: 2, name: "SambaKing", avatar: "S", xp: "12.8K", icon: null },
+              { rank: 3, name: "RioNights", avatar: "R", xp: "11.1K", icon: null },
+            ].map((op) => (
+              <div key={op.rank} className="flex items-center justify-between p-2 rounded-lg hover:bg-bg-card transition-colors">
                 <div className="flex items-center gap-3">
-                  <div className={`w-5 h-5 flex items-center justify-center font-orbitron font-bold text-[10px] ${op.rank === 1 ? 'text-accent' : 'text-text-secondary'}`}>
-                    {op.rank === 1 ? <Flame size={16} className="text-danger animate-pulse drop-shadow-[0_0_5px_rgba(255,71,87,0.5)]" /> : `#${op.rank}`}
+                  <div className="text-text-secondary font-mono text-xs font-bold w-4 text-center">
+                    {op.rank}
                   </div>
-                  <div className="w-8 h-8 rounded-full border border-border-color overflow-hidden bg-bg-card shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={op.avatar} alt="User" className="w-full h-full object-cover" />
+                  <div className="w-8 h-8 rounded-full bg-[#1C2333] border border-border-color flex items-center justify-center text-xs font-bold text-white relative">
+                    {op.avatar}
+                    {op.icon && (
+                      <div className="absolute -bottom-1 -right-1 bg-bg-primary rounded-full p-0.5 border border-[#30363D]">
+                        {op.icon}
+                      </div>
+                    )}
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-[11px] font-bold text-white group-hover:text-accent transition-colors">{op.name}</span>
-                    <span className="text-[9px] font-mono text-text-muted">{op.xp}</span>
-                  </div>
+                  <span className="text-white text-xs font-bold">{op.name}</span>
                 </div>
+                <span className="text-accent font-mono text-[10px]">{op.xp} XP</span>
               </div>
             ))}
           </div>
         </div>
-
       </div>
-
     </div>
   );
 }

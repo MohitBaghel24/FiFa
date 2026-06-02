@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Share2, Target, Activity, Award, Globe, Trophy, CircleDot, BarChart3, Lock, CheckCircle2, XCircle, MessageSquare } from 'lucide-react';
+import { BGPattern } from '@/components/ui/bg-pattern';
 
 export default function ProfilePage() {
   const stats = [
@@ -42,7 +43,8 @@ export default function ProfilePage() {
   });
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-64px)] w-full bg-bg-primary pb-20">
+    <div className="flex flex-col min-h-[calc(100vh-64px)] w-full bg-bg-primary pb-20 relative">
+      <BGPattern variant="dots" mask="fade-center" fill="#30363D" />
       
       {/* HEADER BANNER */}
       <div className="relative w-full h-[280px] bg-[#161B22] border-b border-border-color">

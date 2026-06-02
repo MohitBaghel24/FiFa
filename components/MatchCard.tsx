@@ -1,138 +1,211 @@
-import React from 'react';
-import { CalendarDays, BellRing, BarChart2, FileText } from 'lucide-react';
+"use client";
+import { Match } from "@/hooks/useLiveMatches";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 
-interface MatchCardProps {
-  variant: 'live' | 'upcoming' | 'completed';
-  homeTeam: string;
-  awayTeam: string;
-  homeScore?: number;
-  awayScore?: number;
-  minute?: string; // e.g., "74'"
-  competition: string;
-  homeLogo?: string;
-  awayLogo?: string;
-  dateTime?: string; // e.g., "Tomorrow, 20:00"
-  countdown?: string; // e.g., "In 24 hours"
-}
+export default function MatchCard({ match }: { match: Match }) {
+  const [justScored, setJustScored] = useState(false);
+  const [prevScore, setPrevScore] = useState({
+    home: match.homeScore, away: match.awayScore
+  });
 
-const MatchCard: React.FC<MatchCardProps> = ({ 
-  variant, homeTeam, awayTeam, homeScore, awayScore, minute, competition, homeLogo, awayLogo, dateTime, countdown 
-}) => {
-  // Parse minute to calculate progress bar (e.g. "74'" -> 74)
-  const minuteNum = minute ? parseInt(minute.replace(/[^0-9]/g, ''), 10) : 0;
-  const progressPercent = Math.min(Math.max((minuteNum / 90) * 100, 0), 100);
+  // Detect goal scored
+  useEffect(() => {
+    if (
+      prevScore &&
+      (match.homeScore !== prevScore.home ||
+        match.awayScore !== prevScore.away)
+    ) {
+      const timeout1 = setTimeout(() => {
+        setJustScored(true);
+        setPrevScore({ home: match.homeScore, away: match.awayScore });
+      }, 0);
+      const timeout2 = setTimeout(() => setJustScored(false), 3000);
+      return () => {
+        clearTimeout(timeout1);
+        clearTimeout(timeout2);
+      };
+    }
+  }, [match.homeScore, match.awayScore, prevScore.home, prevScore.away]);
 
-  // Logo render helper
-  const renderLogo = (url?: string, fallbackText?: string) => (
-    <div className="w-[60px] h-[60px] rounded-full bg-bg-primary flex items-center justify-center border border-border-color overflow-hidden shadow-lg shrink-0">
-      {url ? (
-        /* Using normal img for mock purposes */
-        /* eslint-disable-next-line @next/next/no-img-element */
-        <img src={url} alt={fallbackText} className="w-full h-full object-cover" />
-      ) : (
-        <span className="text-xl font-bold font-orbitron text-text-secondary uppercase">
-          {fallbackText?.substring(0, 3)}
-        </span>
-      )}
-    </div>
-  );
+  const progress = match.minute ? (match.minute / 90) * 100 : 0;
 
   return (
-    <div className="bg-[#1C2333] rounded-[16px] border border-[#30363D] p-5 w-full md:w-[320px] flex-shrink-0 flex flex-col group hover:-translate-y-1 hover:border-[#00FF87] hover:shadow-[0_0_20px_rgba(0,255,135,0.15)] transition-all duration-300">
-      
-      {/* Top Header */}
-      <div className="flex justify-between items-center mb-6">
-        <span className="text-[10px] text-text-secondary uppercase tracking-widest font-bold truncate pr-2">
-          {competition}
+    <div style={{
+      background: "#1C2333",
+      border: `1px solid ${justScored ? "#00FF87" : "#30363D"}`,
+      borderRadius: 16,
+      padding: 20,
+      minWidth: 280,
+      display: "flex",
+      flexDirection: "column",
+      gap: 16,
+      transition: "border-color 0.3s",
+      boxShadow: justScored ? "0 0 20px rgba(0,255,135,0.3)" : "none",
+      position: "relative",
+      overflow: "hidden",
+    }}>
+
+      {/* Goal flash overlay */}
+      {justScored && (
+        <div style={{
+          position: "absolute", inset: 0,
+          background: "rgba(0,255,135,0.05)",
+          display: "flex", alignItems: "center",
+          justifyContent: "center", zIndex: 10,
+          animation: "fadeOut 3s forwards",
+          pointerEvents: "none",
+        }}>
+          <span style={{
+            fontSize: 24, fontWeight: 900,
+            color: "#00FF87", fontFamily: "monospace",
+            letterSpacing: "0.2em",
+          }}>⚽ GOAL!</span>
+        </div>
+      )}
+
+      {/* Top row */}
+      <div style={{
+        display: "flex", justifyContent: "space-between",
+        alignItems: "center",
+      }}>
+        <span style={{
+          fontSize: 11, color: "#8B949E",
+          letterSpacing: "0.08em", textTransform: "uppercase",
+        }}>
+          {match.competition}
         </span>
-        
-        {variant === 'live' && (
-          <div className="flex items-center gap-1.5 text-danger font-bold text-xs font-mono shrink-0">
-            <span className="live-dot"></span> • {minute}
-          </div>
+
+        {match.status === "LIVE" && (
+          <span style={{
+            display: "flex", alignItems: "center", gap: 6,
+            fontSize: 12, color: "#FF4757",
+          }}>
+            <span style={{
+              width: 7, height: 7, borderRadius: "50%",
+              background: "#FF4757",
+              animation: "pulse-red 1.5s infinite",
+              display: "inline-block",
+            }} />
+            {match.minute}&apos;
+          </span>
         )}
-        
-        {variant === 'upcoming' && (
-          <div className="flex items-center gap-1.5 text-text-secondary font-bold text-[10px] font-mono shrink-0">
-            <CalendarDays size={14} /> {dateTime}
-          </div>
+
+        {match.status === "UPCOMING" && (
+          <span style={{ fontSize: 11, color: "#00FF87" }}>
+            {match.kickoff}
+          </span>
         )}
-        
-        {variant === 'completed' && (
-          <div className="badge-green !bg-bg-secondary !text-text-secondary !border-border-color !px-2 shrink-0">FT</div>
+
+        {match.status === "FT" && (
+          <span style={{
+            fontSize: 11, color: "#8B949E",
+            background: "#30363D", padding: "2px 8px",
+            borderRadius: 4,
+          }}>FT</span>
         )}
       </div>
-      
-      {/* Center content */}
-      <div className="flex justify-between items-center mb-4 px-1">
-        <div className="flex flex-col items-center gap-3 w-16">
-          {renderLogo(homeLogo, homeTeam)}
-          <span className="font-bold text-white text-sm tracking-widest uppercase">{homeTeam.substring(0, 3)}</span>
+
+      {/* Teams and Score */}
+      <div style={{
+        display: "flex", alignItems: "center",
+        justifyContent: "space-between",
+      }}>
+        {/* Home team */}
+        <div style={{
+          display: "flex", flexDirection: "column",
+          alignItems: "center", gap: 8, flex: 1,
+        }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={match.homeTeam.flag}
+            alt={match.homeTeam.fullName}
+            style={{
+              width: 56, height: 56, borderRadius: "50%",
+              objectFit: "cover", border: "2px solid #30363D"
+            }}
+          />
+          <span style={{
+            color: "white", fontWeight: 700, fontSize: 14,
+            letterSpacing: "0.05em",
+          }}>
+            {match.homeTeam.name}
+          </span>
         </div>
-        
-        {variant === 'live' && (
-          <div className="font-mono text-4xl font-bold text-accent px-2 drop-shadow-[0_0_10px_rgba(0,255,135,0.3)] shrink-0">
-            {homeScore} - {awayScore}
-          </div>
-        )}
-        
-        {variant === 'completed' && (
-          <div className="font-mono text-4xl font-bold text-white px-2 shrink-0">
-            {homeScore} - {awayScore}
-          </div>
-        )}
-        
-        {variant === 'upcoming' && (
-          <div className="flex flex-col items-center px-2 shrink-0">
-            <div className="font-orbitron text-2xl font-bold text-text-secondary italic">VS</div>
-            {countdown && <span className="text-[9px] text-accent mt-2 tracking-wider uppercase font-bold text-center">{countdown}</span>}
-          </div>
-        )}
-        
-        <div className="flex flex-col items-center gap-3 w-16">
-          {renderLogo(awayLogo, awayTeam)}
-          <span className="font-bold text-white text-sm tracking-widest uppercase">{awayTeam.substring(0, 3)}</span>
+
+        {/* Score */}
+        <div style={{
+          display: "flex", flexDirection: "column",
+          alignItems: "center", gap: 4,
+        }}>
+          {match.status !== "UPCOMING" ? (
+            <span style={{
+              fontSize: 36, fontWeight: 900, color: "#00FF87",
+              fontFamily: "monospace", letterSpacing: "0.1em",
+              lineHeight: 1,
+            }}>
+              {match.homeScore ?? 0} - {match.awayScore ?? 0}
+            </span>
+          ) : (
+            <span style={{
+              fontSize: 22, fontWeight: 700, color: "#8B949E",
+              fontFamily: "monospace",
+            }}>VS</span>
+          )}
+        </div>
+
+        {/* Away team */}
+        <div style={{
+          display: "flex", flexDirection: "column",
+          alignItems: "center", gap: 8, flex: 1,
+        }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={match.awayTeam.flag}
+            alt={match.awayTeam.fullName}
+            style={{
+              width: 56, height: 56, borderRadius: "50%",
+              objectFit: "cover", border: "2px solid #30363D"
+            }}
+          />
+          <span style={{
+            color: "white", fontWeight: 700, fontSize: 14,
+            letterSpacing: "0.05em",
+          }}>
+            {match.awayTeam.name}
+          </span>
         </div>
       </div>
-      
-      {/* variant specific bottom */}
-      <div className="mt-auto pt-4 flex flex-col gap-4">
-        {variant === 'live' && (
-          <>
-            <div className="w-full h-1.5 bg-bg-primary rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-accent relative shadow-[0_0_10px_#00FF87]" 
-                style={{ width: `${progressPercent}%` }}
-              >
-                <div className="absolute top-0 right-0 w-4 h-full bg-white/50 blur-[2px]"></div>
-              </div>
-            </div>
-            <button className="btn-primary w-full text-xs shadow-[0_0_15px_rgba(0,255,135,0.2)]">
-              JOIN DISCUSSION
-            </button>
-          </>
-        )}
-        
-        {variant === 'upcoming' && (
-          <button className="btn-outline w-full flex items-center justify-center gap-2 text-xs group-hover:border-accent group-hover:text-accent transition-colors">
-            <BellRing size={16} /> SET REMINDER
-          </button>
-        )}
-        
-        {variant === 'completed' && (
-          <div className="flex gap-3">
-            <button className="btn-outline flex-1 !px-2 flex justify-center items-center gap-1.5 text-[10px] group-hover:border-accent group-hover:text-accent">
-              <BarChart2 size={14} /> VIEW STATS
-            </button>
-            <button className="btn-outline flex-1 !px-2 flex justify-center items-center gap-1.5 text-[10px] group-hover:border-accent group-hover:text-accent">
-              <FileText size={14} /> REPORT
-            </button>
-          </div>
-        )}
-      </div>
-      
+
+      {/* Progress bar (live only) */}
+      {match.status === "LIVE" && (
+        <div style={{
+          height: 3, background: "#30363D",
+          borderRadius: 2, overflow: "hidden",
+        }}>
+          <div style={{
+            height: "100%", width: `${progress}%`,
+            background: "linear-gradient(90deg, #00FF87, #00CC6A)",
+            borderRadius: 2, transition: "width 1s ease",
+          }} />
+        </div>
+      )}
+
+      {/* Join Discussion button */}
+      <Link
+        href={`/community/match-${match.id}`}
+        style={{
+          display: "block", textAlign: "center",
+          padding: "12px", borderRadius: 8,
+          background: "#00FF87", color: "#0D1117",
+          fontWeight: 700, fontSize: 13,
+          letterSpacing: "0.1em", textDecoration: "none",
+          textTransform: "uppercase",
+          transition: "background 0.2s",
+        }}
+      >
+        JOIN DISCUSSION
+      </Link>
     </div>
   );
-};
-
-export default MatchCard;
+}

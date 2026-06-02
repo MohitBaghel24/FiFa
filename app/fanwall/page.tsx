@@ -1,236 +1,312 @@
 "use client";
-
-import React from 'react';
-import { Image as ImageIcon, BarChart2, PlaySquare, ThumbsUp, Heart, MessageCircle, Share2, MoreHorizontal, TrendingUp, Trophy } from 'lucide-react';
+import { useState, useEffect, useRef } from "react";
+import { useAuth } from "@/context/AuthContext";
+import {
+  getPosts, createPost, likePost,
+  subscribeToNewPosts
+} from "@/lib/appwrite";
+import AuthModal from "@/components/AuthModal";
 
 export default function FanWallPage() {
-  const posts = [
-    {
-      id: 1,
-      user: 'VINI_FAN_99',
-      avatar: 'https://i.pravatar.cc/150?u=vini',
-      flag: '🇧🇷',
-      location: 'BRAZIL',
-      time: '2m ago',
-      content: 'Just arrived at the stadium! The atmosphere is absolutely electric today. Vamos Brazil!! 🇧🇷🔥',
-      image: 'https://images.unsplash.com/photo-1518605368461-1e1252281136?q=80&w=1000&auto=format&fit=crop',
-      likes: '1.2k',
-      hearts: '450',
-      comments: '89'
-    },
-    {
-      id: 2,
-      user: 'TacticalGenius',
-      avatar: 'https://i.pravatar.cc/150?u=tact',
-      flag: '🏴󠁧󠁢󠁥󠁮󠁧󠁿',
-      location: 'ENGLAND',
-      time: '14m ago',
-      content: 'If we don\'t switch to a back 4 in the second half, they are going to overrun our midfield completely. The pivot is way too exposed.',
-      image: null,
-      likes: '432',
-      hearts: '12',
-      comments: '104'
-    },
-    {
-      id: 3,
-      user: 'MessiMagic10',
-      avatar: 'https://i.pravatar.cc/150?u=messi',
-      flag: '🇦🇷',
-      location: 'ARGENTINA',
-      time: '1h ago',
-      content: 'What a beautiful assist! Vision 100.',
-      image: 'https://images.unsplash.com/photo-1574629810360-7efbb6b6923f?q=80&w=1000&auto=format&fit=crop',
-      likes: '5.4k',
-      hearts: '2.1k',
-      comments: '420'
-    },
-    {
-      id: 4,
-      user: 'Ultra_Fan_01',
-      avatar: 'https://i.pravatar.cc/150?u=me',
-      flag: '🇺🇸',
-      location: 'USA',
-      time: '3h ago',
-      content: 'Who else thinks the offside rule needs to be revised? These VAR decisions are taking way too long and ruining the flow of the game. Let the boys play!',
-      image: null,
-      likes: '890',
-      hearts: '44',
-      comments: '312'
+  const { user, isLoggedIn } = useAuth();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [posts, setPosts]       = useState<any[]>([]);
+  const [content, setContent]   = useState("");
+  const [isPosting, setIsPosting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [showAuth, setShowAuth]   = useState(false);
+  const [offset, setOffset]       = useState(0);
+  const [hasMore, setHasMore]     = useState(true);
+  const [likedPosts, setLikedPosts] = useState<Set<string>>(new Set());
+
+  const MOCK_POSTS = [
+    { $id:"m1", username:"Alex_Silva", country:"Brazil",
+      countryFlag:"🇧🇷", content:"Vini Jr is absolutely tearing it up! 🔥",
+      likes:124, comments:18,
+      createdAt: new Date(Date.now()-120000).toISOString() },
+    { $id:"m2", username:"James_T", country:"England",
+      countryFlag:"🏴",
+      content:"Need a tactical shift. Midfield is getting overrun.",
+      likes:89, comments:45,
+      createdAt: new Date(Date.now()-900000).toISOString() },
+    { $id:"m3", username:"Sofia_R", country:"Italy",
+      countryFlag:"🇮🇹",
+      content:"Forza Azzurri! Electric atmosphere tonight! ⚡",
+      likes:342, comments:56,
+      createdAt: new Date(Date.now()-3600000).toISOString() },
+  ];
+
+  useEffect(() => {
+    loadPosts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const unsub = subscribeToNewPosts((newPost: any) => {
+      setPosts(prev => [newPost, ...prev]);
+    });
+    return () => unsub();
+  }, []);
+
+  async function loadPosts(reset = false) {
+    setIsLoading(true);
+    const newOffset = reset ? 0 : offset;
+    const data = await getPosts(10, newOffset);
+    if (data.length < 10) setHasMore(false);
+    setPosts(prev => reset ? data : [...prev, ...data]);
+    setOffset(newOffset + 10);
+    setIsLoading(false);
+  }
+
+  async function handlePost() {
+    if (!content.trim()) return;
+    if (!isLoggedIn) { setShowAuth(true); return; }
+    setIsPosting(true);
+    try {
+      await createPost(
+        user.$id, user.name,
+        "Global", "🌍", content
+      );
+      setContent("");
+    } catch (e) {
+      console.error(e);
     }
-  ];
+    setIsPosting(false);
+  }
 
-  const trending = [
-    { hashtag: '#BRAvsARG', title: 'South American Classic', count: '124.5K' },
-    { hashtag: '#BallonDor', title: 'Player of the Year Debate', count: '89.2K' },
-    { hashtag: '#TransferRumors', title: 'Summer Window Opening', count: '54.2K' },
-    { hashtag: '#UCLFinal', title: 'Road to Champions', count: '42.1K' }
-  ];
+  async function handleLike(postId: string, likes: number) {
+    if (likedPosts.has(postId)) return;
+    await likePost(postId, likes);
+    setLikedPosts(prev => new Set([...prev, postId]));
+    setPosts(prev => prev.map(p =>
+      p.$id === postId ? {...p, likes: likes+1} : p
+    ));
+  }
 
-  const topFans = [
-    { rank: 1, user: 'NeonStriker99', xp: '14,250 XP', avatar: 'https://i.pravatar.cc/150?u=a' },
-    { rank: 2, user: 'CyberPitch', xp: '13,840 XP', avatar: 'https://i.pravatar.cc/150?u=b' },
-    { rank: 3, user: 'DataGoalie', xp: '13,100 XP', avatar: 'https://i.pravatar.cc/150?u=c' },
-  ];
+  function timeAgo(iso: string) {
+    const diff = Date.now() - new Date(iso).getTime();
+    const mins = Math.floor(diff/60000);
+    if (mins < 1) return "just now";
+    if (mins < 60) return mins + "m ago";
+    const hrs = Math.floor(mins/60);
+    if (hrs < 24) return hrs + "h ago";
+    return Math.floor(hrs/24) + "d ago";
+  }
+
+  const displayPosts = posts.length > 0 ? posts : MOCK_POSTS;
 
   return (
-    <div className="min-h-[calc(100vh-64px)] w-full bg-bg-primary pt-8 pb-20 px-4 md:px-8">
-      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-8">
-        
-        {/* MAIN FEED (65% -> lg:col-span-8) */}
-        <div className="lg:col-span-8 flex flex-col gap-8">
-          
-          {/* POST COMPOSER */}
-          <div className="bg-[#1C2333] border border-[#30363D] rounded-xl p-5 shadow-lg relative overflow-hidden group">
-            {/* Subtle glow edge */}
-            <div className="absolute top-0 left-0 w-full h-1 bg-accent/30 group-hover:bg-accent transition-colors"></div>
-            
-            <div className="flex gap-4 mt-2">
-              <div className="w-12 h-12 rounded-full overflow-hidden border border-border-color shrink-0 shadow-[0_0_10px_rgba(0,0,0,0.5)]">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="https://i.pravatar.cc/150?u=me" alt="You" className="w-full h-full object-cover" />
+    <div style={{ minHeight:"100vh", background:"#0D1117" }}>
+      <div style={{
+        maxWidth:1200, margin:"0 auto",
+        padding:"40px 24px",
+        display:"grid",
+        gridTemplateColumns:"1fr 320px",
+        gap:32,
+      }}>
+
+        {/* Main feed */}
+        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+          {/* Post composer */}
+          <div style={{
+            background:"#161B22", border:"1px solid #30363D",
+            borderRadius:12, padding:20,
+          }}>
+            <div style={{ display:"flex", gap:12 }}>
+              <div style={{
+                width:44, height:44, borderRadius:"50%",
+                background: isLoggedIn ? "#00FF87" : "#30363D",
+                display:"flex", alignItems:"center",
+                justifyContent:"center", color:"#0D1117",
+                fontWeight:700, fontSize:16, flexShrink:0,
+              }}>
+                {isLoggedIn ? user?.name?.charAt(0)?.toUpperCase() : "?"}
               </div>
-              <textarea 
-                placeholder="Share your thoughts on the match..." 
-                className="w-full bg-transparent text-white text-lg focus:outline-none resize-none pt-2 placeholder:text-text-muted font-medium tracking-wide"
-                rows={2}
-              ></textarea>
+              <textarea
+                value={content}
+                onChange={e => setContent(e.target.value)}
+                placeholder={isLoggedIn
+                  ? "Share your thoughts on the match..."
+                  : "Login to post your thoughts..."}
+                disabled={!isLoggedIn}
+                style={{
+                  flex:1, background:"transparent",
+                  border:"none", outline:"none",
+                  color:"white", fontSize:15,
+                  resize:"none", minHeight:80,
+                  fontFamily:"inherit",
+                }}
+              />
             </div>
-            
-            <div className="flex items-center justify-between mt-4 pt-4 border-t border-[#30363D]">
-              <div className="flex items-center gap-2 md:gap-4 text-text-secondary">
-                <button className="hover:text-accent transition-colors flex items-center justify-center p-2 rounded-full hover:bg-accent/10"><ImageIcon size={20} /></button>
-                <button className="hover:text-accent transition-colors flex items-center justify-center p-2 rounded-full hover:bg-accent/10"><BarChart2 size={20} /></button>
-                <button className="hover:text-accent transition-colors flex items-center justify-center p-2 rounded-full hover:bg-accent/10"><PlaySquare size={20} /></button>
-              </div>
-              <button className="btn-primary !px-8 !py-2.5 shadow-[0_0_15px_rgba(0,255,135,0.2)]">
-                POST
+            <div style={{
+              display:"flex", justifyContent:"flex-end",
+              marginTop:12, borderTop:"1px solid #30363D",
+              paddingTop:12,
+            }}>
+              <button onClick={handlePost} disabled={isPosting || !content.trim()}
+                style={{
+                  padding:"10px 28px", borderRadius:8,
+                  background: content.trim() ? "#00FF87" : "#30363D",
+                  color: content.trim() ? "#0D1117" : "#8B949E",
+                  fontWeight:700, fontSize:13, border:"none",
+                  letterSpacing:"0.1em", cursor:"pointer",
+                  textTransform:"uppercase",
+                }}>
+                {isPosting ? "POSTING..." : "POST"}
               </button>
             </div>
           </div>
 
-          {/* FAN POST CARDS */}
-          <div className="flex flex-col gap-6">
-            {posts.map(post => (
-              <div key={post.id} className="bg-[#161B22] border border-[#30363D] rounded-xl p-5 md:p-6 shadow-lg hover:border-[#484F58] transition-colors">
-                
-                {/* Post Header */}
-                <div className="flex items-center justify-between mb-5">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="w-[50px] h-[50px] rounded-full overflow-hidden border border-border-color shadow-[0_0_10px_rgba(0,0,0,0.3)]">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={post.avatar} alt={post.user} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full border-2 border-[#161B22] bg-bg-primary flex items-center justify-center text-[10px] shadow-sm">
-                        {post.flag}
-                      </div>
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="font-bold text-white text-[15px] hover:text-accent cursor-pointer transition-colors tracking-wide">{post.user}</span>
-                      <span className="text-[11px] text-text-muted font-mono tracking-wide">{post.location} • {post.time}</span>
-                    </div>
+          {/* Posts */}
+          {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+          {displayPosts.map((post: any) => (
+            <div key={post.$id} style={{
+              background:"#161B22", border:"1px solid #30363D",
+              borderRadius:12, padding:20,
+            }}>
+              <div style={{ display:"flex", gap:12, marginBottom:12 }}>
+                <div style={{
+                  width:44, height:44, borderRadius:"50%",
+                  background:"#1C2333", display:"flex",
+                  alignItems:"center", justifyContent:"center",
+                  color:"white", fontWeight:700,
+                  border:"1px solid #30363D", flexShrink:0,
+                }}>
+                  {post.username?.charAt(0)?.toUpperCase()}
+                </div>
+                <div>
+                  <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                    <span style={{
+                      color:"white", fontWeight:600, fontSize:14
+                    }}>
+                      {post.username}
+                    </span>
+                    <span style={{ fontSize:16 }}>{post.countryFlag}</span>
+                    <span style={{ color:"#8B949E", fontSize:12 }}>
+                      @{post.username?.toLowerCase()?.replace(" ","_")}
+                    </span>
+                    <span style={{ color:"#484F58", fontSize:12 }}>
+                      • {timeAgo(post.createdAt)}
+                    </span>
                   </div>
-                  <button className="text-text-muted hover:text-white transition-colors p-2 rounded-full hover:bg-white/5">
-                    <MoreHorizontal size={20} />
-                  </button>
+                  <span style={{
+                    color:"#00FF87", fontSize:11, letterSpacing:"0.06em"
+                  }}>
+                    {post.country?.toUpperCase()}
+                  </span>
                 </div>
-                
-                {/* Post Body */}
-                <div className="flex flex-col gap-5">
-                  <p className="text-text-primary text-[15px] leading-relaxed tracking-wide">
-                    {post.content}
-                  </p>
-                  {post.image && (
-                    <div className="w-full h-[250px] md:h-[400px] rounded-xl overflow-hidden border border-border-color shadow-md">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={post.image} alt="Post media" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                </div>
-                
-                {/* Post Actions */}
-                <div className="flex items-center justify-between mt-6 pt-5 border-t border-[#30363D]">
-                  <div className="flex items-center gap-2 md:gap-6 text-text-muted text-[11px] md:text-sm font-bold tracking-widest font-mono">
-                    <button className="flex items-center gap-2 hover:text-accent hover:bg-accent/5 p-2 rounded-lg transition-colors group">
-                      <ThumbsUp size={18} className="group-hover:scale-110 transition-transform" /> 
-                      {post.likes}
-                    </button>
-                    <button className="flex items-center gap-2 hover:text-danger hover:bg-danger/5 p-2 rounded-lg transition-colors group">
-                      <Heart size={18} className="group-hover:scale-110 transition-transform" /> 
-                      {post.hearts}
-                    </button>
-                    <button className="flex items-center gap-2 hover:text-accent hover:bg-accent/5 p-2 rounded-lg transition-colors group">
-                      <MessageCircle size={18} className="group-hover:scale-110 transition-transform" /> 
-                      {post.comments}
-                    </button>
-                  </div>
-                  <button className="text-text-muted hover:text-accent hover:bg-accent/5 p-2 rounded-lg transition-colors">
-                    <Share2 size={18} />
-                  </button>
-                </div>
+              </div>
+
+              <p style={{
+                color:"#E6EDF3", fontSize:15, lineHeight:1.6,
+                margin:"0 0 16px",
+              }}>
+                {post.content}
+              </p>
+
+              <div style={{ display:"flex", gap:20 }}>
+                <button
+                  onClick={() => handleLike(post.$id, post.likes)}
+                  style={{
+                    background:"none", border:"none",
+                    color: likedPosts.has(post.$id) ? "#00FF87" : "#8B949E",
+                    cursor:"pointer", fontSize:13,
+                    display:"flex", alignItems:"center", gap:6,
+                  }}>
+                  👍 {post.likes || 0}
+                </button>
+                <span style={{
+                  color:"#8B949E", fontSize:13,
+                  display:"flex", alignItems:"center", gap:6,
+                }}>
+                  💬 {post.comments || 0}
+                </span>
+                <span style={{
+                  color:"#8B949E", fontSize:13,
+                  display:"flex", alignItems:"center", gap:6,
+                }}>
+                  🔗 Share
+                </span>
+              </div>
+            </div>
+          ))}
+
+          {/* Load more */}
+          {hasMore && (
+            <button onClick={() => loadPosts()}
+              disabled={isLoading}
+              style={{
+                padding:"14px", borderRadius:8,
+                border:"1px solid #30363D", background:"transparent",
+                color:"#8B949E", fontSize:13, cursor:"pointer",
+                letterSpacing:"0.08em",
+              }}>
+              {isLoading ? "LOADING..." : "LOAD MORE POSTS"}
+            </button>
+          )}
+        </div>
+
+        {/* Sidebar */}
+        <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+
+          {/* Trending */}
+          <div style={{
+            background:"#161B22", border:"1px solid #30363D",
+            borderRadius:12, padding:20,
+          }}>
+            <h3 style={{
+              color:"white", fontSize:14, fontWeight:700,
+              letterSpacing:"0.1em", margin:"0 0 16px",
+              textTransform:"uppercase",
+              display:"flex", alignItems:"center", gap:8,
+            }}>
+              📈 TRENDING
+            </h3>
+            {[
+              { tag:"#WorldCupFinal", posts:"124K" },
+              { tag:"#ViniJrGoal", posts:"89K" },
+              { tag:"#TacticalAnalysis", posts:"45K" },
+              { tag:"#EuroNations", posts:"32K" },
+              { tag:"#RefereeDecision", posts:"28K" },
+            ].map(t => (
+              <div key={t.tag} style={{
+                display:"flex", justifyContent:"space-between",
+                padding:"10px 0", borderBottom:"1px solid #30363D",
+              }}>
+                <span style={{ color:"#00FF87", fontSize:13 }}>{t.tag}</span>
+                <span style={{ color:"#8B949E", fontSize:12 }}>{t.posts}</span>
               </div>
             ))}
           </div>
 
-          {/* Infinite Scroll Loader Placeholder */}
-          <div className="flex flex-col items-center justify-center py-10 gap-4 opacity-50">
-            <span className="w-8 h-8 rounded-full border-[3px] border-accent border-t-transparent animate-spin drop-shadow-[0_0_8px_#00FF87]"></span>
-            <span className="text-[10px] text-accent uppercase tracking-widest font-bold">Retrieving more signals...</span>
-          </div>
-          
-        </div>
-
-        {/* RIGHT SIDEBAR (35% -> lg:col-span-4) */}
-        <div className="hidden lg:flex flex-col gap-8">
-          
-          {/* TRENDING */}
-          <div className="bg-[#1C2333] border border-[#30363D] rounded-xl p-6 shadow-lg">
-            <h3 className="text-xs font-orbitron font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-6">
-              <TrendingUp size={16} className="text-accent" /> TRENDING NOW
-            </h3>
-            <div className="flex flex-col gap-6">
-              {trending.map((trend, i) => (
-                <div key={i} className="flex flex-col gap-1.5 cursor-pointer group">
-                  <span className="text-[10px] text-accent font-bold tracking-[0.15em] uppercase">{trend.hashtag}</span>
-                  <span className="text-[15px] font-bold text-white group-hover:text-accent transition-colors tracking-wide">{trend.title}</span>
-                  <span className="text-[10px] text-text-muted font-mono tracking-widest uppercase">{trend.count} Posts</span>
-                </div>
-              ))}
+          {/* Login CTA if not logged in */}
+          {!isLoggedIn && (
+            <div style={{
+              background:"rgba(0,255,135,0.05)",
+              border:"1px solid rgba(0,255,135,0.2)",
+              borderRadius:12, padding:20, textAlign:"center",
+            }}>
+              <p style={{ color:"white", fontSize:14, margin:"0 0 12px" }}>
+                Join the conversation
+              </p>
+              <button onClick={() => setShowAuth(true)}
+                style={{
+                  width:"100%", padding:"10px",
+                  background:"#00FF87", color:"#0D1117",
+                  border:"none", borderRadius:8,
+                  fontWeight:700, cursor:"pointer",
+                  letterSpacing:"0.08em",
+                }}>
+                LOGIN TO POST
+              </button>
             </div>
-          </div>
-          
-          {/* Subtle Separator */}
-          <div className="w-full h-[1px] bg-gradient-to-r from-transparent via-[#30363D] to-transparent"></div>
-          
-          {/* TOP FANS THIS WEEK */}
-          <div className="bg-[#1C2333] border border-[#30363D] rounded-xl p-6 shadow-lg">
-            <h3 className="text-xs font-orbitron font-bold text-white uppercase tracking-widest flex items-center gap-2 mb-6">
-              <Trophy size={16} className="text-gold" /> TOP FANS THIS WEEK
-            </h3>
-            <div className="flex flex-col gap-3">
-              {topFans.map((fan) => (
-                <div key={fan.rank} className="flex items-center gap-4 group cursor-pointer p-3 -mx-3 rounded-lg hover:bg-[#212A3E] transition-colors border border-transparent hover:border-[#30363D]">
-                  <div className={`w-6 text-center font-orbitron font-bold text-sm transition-colors ${
-                    fan.rank === 1 ? 'text-gold' : fan.rank === 2 ? 'text-silver' : fan.rank === 3 ? 'text-bronze' : 'text-text-secondary'
-                  }`}>
-                    {fan.rank}
-                  </div>
-                  <div className="w-10 h-10 rounded-full overflow-hidden border border-border-color shrink-0 group-hover:border-accent transition-colors shadow-md">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={fan.avatar} alt={fan.user} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-bold text-white text-[13px] tracking-wide group-hover:text-accent transition-colors">{fan.user}</span>
-                    <span className="text-[10px] text-text-muted font-mono">{fan.xp}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
+          )}
         </div>
-
       </div>
+
+      {showAuth && <AuthModal onClose={() => setShowAuth(false)} />}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Orbitron:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@400;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @theme {
@@ -19,8 +19,8 @@
   --color-silver: var(--silver);
   --color-bronze: var(--bronze);
   
-  --font-orbitron: 'Orbitron', sans-serif;
-  --font-inter: 'Inter', sans-serif;
+  --font-orbitron: var(--font-orbitron), 'Montserrat', sans-serif;
+  --font-inter: var(--font-inter), 'Roboto', sans-serif;
 }
 
 :root {
@@ -287,3 +287,21 @@ small {
   50% { transform: translate(15px, -15px); }
   100% { transform: translate(-15px, 15px); }
 }
+
+@keyframes shimmer {
+  0% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.4; }
+}
+
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  70% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #30363D; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #00FF87; }
