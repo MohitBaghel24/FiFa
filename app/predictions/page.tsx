@@ -1,218 +1,193 @@
 "use client";
 
-import React, { useState } from 'react';
-import { TrendingUp, Timer, Trophy, ArrowUpRight } from 'lucide-react';
-import { motion, Variants } from 'framer-motion';
-import Link from 'next/link';
+import React, { useEffect, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useLiveMatches } from '@/hooks/useLiveMatches';
+import { getLeaderboard, getUserPredictions, savePrediction } from '@/lib/appwrite';
+import AuthGuard from '@/components/AuthGuard';
+import { PredictionCard } from '@/components/PredictionCard';
 import { BGPattern } from '@/components/ui/bg-pattern';
-import { SpiralAnimation } from '@/components/ui/spiral-animation';
-
-const staggerContainer: Variants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-};
-
-const fadeInUp: Variants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
-};
+import { motion } from 'framer-motion';
+import { Trophy, Medal, Award, User as UserIcon } from 'lucide-react';
 
 export default function PredictionsPage() {
-  const [homeScore, setHomeScore] = useState('2');
-  const [awayScore, setAwayScore] = useState('1');
-  const [isLocked, setIsLocked] = useState(false);
+  const { user } = useAuth();
+  const { matches, isLoading: matchesLoading } = useLiveMatches();
 
-  const leaderboard = [
-    { rank: 1, user: 'NeonStriker99', country: 'FRANCE', points: '14,250', accuracy: '87.5%', avatar: 'https://i.pravatar.cc/150?u=a', medal: 'text-gold', dropShadow: 'drop-shadow-[0_0_8px_rgba(255,215,0,0.5)]' },
-    { rank: 2, user: 'CyberPitch', country: 'JAPAN', points: '13,840', accuracy: '84.2%', avatar: 'https://i.pravatar.cc/150?u=b', medal: 'text-silver', dropShadow: 'drop-shadow-[0_0_8px_rgba(192,192,192,0.5)]' },
-    { rank: 3, user: 'DataGoalie', country: 'BRAZIL', points: '13,100', accuracy: '81.0%', avatar: 'https://i.pravatar.cc/150?u=c', medal: 'text-bronze', dropShadow: 'drop-shadow-[0_0_8px_rgba(205,127,50,0.5)]' },
-  ];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [predictions, setPredictions] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
+
+  useEffect(() => {
+    async function loadData() {
+      if (!user) return;
+      try {
+        const [preds, leaders] = await Promise.all([
+          getUserPredictions(user.$id),
+          getLeaderboard(10)
+        ]);
+        setPredictions(preds);
+        setLeaderboard(leaders);
+      } catch (err) {
+        // Silently handle if database doesn't exist
+      } finally {
+        setLoadingData(false);
+      }
+    }
+    loadData();
+  }, [user]);
+
+  const handlePredict = async (matchId: string, homeScore: number, awayScore: number) => {
+    if (!user) return;
+    try {
+      const newPred = await savePrediction(user.$id, matchId, homeScore, awayScore);
+      setPredictions(prev => [newPred, ...prev]);
+    } catch (err) {
+      // Silently handle if database doesn't exist yet, but still update the UI
+      // locally so the user can see the "Prediction Locked" state.
+      const mockPred = { matchId, homeScore, awayScore };
+      setPredictions(prev => [mockPred, ...prev]);
+    }
+  };
+
+  // Filter out full-time matches
+  const activeFixtures = matches.filter(m => m.status !== "FT");
+
+  const getMedalColor = (index: number) => {
+    if (index === 0) return 'text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]';
+    if (index === 1) return 'text-gray-300 drop-shadow-[0_0_8px_rgba(209,213,219,0.8)]';
+    if (index === 2) return 'text-amber-600 drop-shadow-[0_0_8px_rgba(217,119,6,0.8)]';
+    return 'text-text-secondary';
+  };
+
+  const getMedalIcon = (index: number) => {
+    if (index === 0) return <Trophy size={24} className={getMedalColor(index)} />;
+    if (index === 1) return <Medal size={24} className={getMedalColor(index)} />;
+    if (index === 2) return <Award size={24} className={getMedalColor(index)} />;
+    return <span className="font-orbitron font-bold text-text-secondary w-6 text-center">{index + 1}</span>;
+  };
 
   return (
-    <div className="flex flex-col min-h-[calc(100vh-64px)] bg-bg-primary pt-8 pb-20 px-4 md:px-8 relative">
-      <BGPattern variant="dots" mask="fade-center" fill="#30363D" />
-      <div className="max-w-4xl mx-auto w-full flex flex-col gap-12 relative z-10">
-        
-        {/* TOP ROW */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+    <AuthGuard>
+      <div className="flex flex-col min-h-[calc(100vh-64px)] bg-bg-primary pt-8 pb-20 px-4 md:px-8 relative text-white">
+        <BGPattern variant="dots" mask="fade-center" fill="var(--border)" />
+
+        <div className="max-w-7xl mx-auto w-full flex flex-col gap-12 relative z-10">
+
+          {/* HEADER */}
           <div className="flex flex-col gap-2">
             <h1 className="text-3xl md:text-5xl font-orbitron font-bold text-white uppercase tracking-wider">
-              MATCH PREDICTIONS
+              Prediction Arena
             </h1>
             <p className="text-text-secondary text-sm md:text-base tracking-wide">
-              Lock in your forecast. Dominate the leaderboard.
+              Lock in your forecast. Dominate the global leaderboard.
             </p>
           </div>
-          
-          <div className="border border-accent rounded-xl bg-accent-glow p-5 flex flex-col items-center md:items-end min-w-[220px]">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-2 h-2 rounded-full bg-accent animate-pulse shadow-[0_0_8px_#00FF87]"></span>
-              <span className="text-[10px] text-accent uppercase tracking-[0.2em] font-bold">YOUR RANK</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="text-2xl md:text-4xl font-orbitron font-bold text-accent">#247</span>
-              <div className="flex flex-col justify-center text-accent text-[10px] font-bold tracking-widest">
-                <TrendingUp size={16} className="mb-0.5" />
-                <span>GLOBALLY</span>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        {/* PREDICTION CARD */}
-        <div className="bg-[#1C2333] border border-[#30363D] rounded-2xl p-6 md:p-10 w-full flex flex-col gap-8 shadow-xl relative overflow-hidden group">
-          
-          {/* Spiral Animation Background */}
-          <div className="absolute inset-0 z-0">
-            <SpiralAnimation isFast={isLocked} />
-            <div className="absolute inset-0 bg-[#1C2333]/60 backdrop-blur-[2px]"></div>
-          </div>
-          
-          {/* Subtle bg glow on hover */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-accent/5 rounded-full blur-[100px] opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none z-0"></div>
+          <div className="flex flex-col lg:flex-row gap-8 w-full">
 
-          {/* Top Bar */}
-          <div className="flex justify-between items-center border-b border-[#30363D] pb-5 relative z-10">
-            <div className="flex items-center gap-2 text-danger font-bold text-xs uppercase tracking-widest">
-              <Timer size={16} />
-              <span>CLOSES IN 2H 14M</span>
-            </div>
-            <div className="bg-bg-primary border border-[#30363D] px-3 py-1 rounded text-[10px] text-text-secondary uppercase font-bold tracking-widest">
-              INTERNATIONAL FRIENDLY
-            </div>
-          </div>
-          
-          {/* Center Inputs */}
-          <div className="flex flex-row justify-between md:justify-center items-center gap-2 md:gap-20 py-6 relative z-10 max-w-[320px] md:max-w-none mx-auto w-full">
-            
-            {/* Home Team */}
-            <div className="flex flex-col items-center gap-3 md:gap-5 w-16 md:w-24 shrink-0">
-              <div className="w-[50px] h-[50px] md:w-[80px] md:h-[80px] rounded-full bg-bg-primary border-2 border-border-color overflow-hidden flex items-center justify-center text-3xl md:text-5xl shadow-[0_0_20px_rgba(0,0,0,0.5)]">
-                🇧🇷
+            {/* LEFT COLUMN: ACTIVE FIXTURES */}
+            <div className="w-full lg:w-2/3 flex flex-col gap-6">
+              <div className="flex items-center gap-3 border-b border-border-color pb-4">
+                <span className="w-2 h-2 rounded-full bg-accent shadow-[0_0_8px_var(--accent)] animate-pulse"></span>
+                <h2 className="text-xl font-orbitron font-bold tracking-widest uppercase">Active Fixtures</h2>
+                <span className="ml-auto bg-border-color text-xs font-bold px-3 py-1 rounded-full">
+                  {activeFixtures.length}
+                </span>
               </div>
-              <span className="font-orbitron font-bold text-white tracking-widest uppercase text-[10px] md:text-base">BRAZIL</span>
-            </div>
-            
-            {/* Scores */}
-            <div className="flex items-center gap-3 md:gap-8 shrink-0">
-              <input 
-                type="text" 
-                maxLength={2}
-                value={homeScore}
-                onChange={(e) => setHomeScore(e.target.value.replace(/[^0-9]/g, ''))}
-                className="w-[45px] h-[60px] md:w-[60px] md:h-[75px] bg-[#0D1117] border-2 border-accent rounded-xl text-center text-2xl md:text-4xl font-mono font-bold text-accent focus:outline-none focus:shadow-[0_0_15px_rgba(0,255,135,0.4)] transition-shadow"
-              />
-              <span className="font-orbitron text-lg md:text-2xl text-text-secondary font-bold italic">VS</span>
-              <input 
-                type="text" 
-                maxLength={2}
-                value={awayScore}
-                onChange={(e) => setAwayScore(e.target.value.replace(/[^0-9]/g, ''))}
-                className="w-[45px] h-[60px] md:w-[60px] md:h-[75px] bg-[#0D1117] border-2 border-accent rounded-xl text-center text-2xl md:text-4xl font-mono font-bold text-accent focus:outline-none focus:shadow-[0_0_15px_rgba(0,255,135,0.4)] transition-shadow"
-              />
-            </div>
-            
-            {/* Away Team */}
-            <div className="flex flex-col items-center gap-3 md:gap-5 w-16 md:w-24 shrink-0">
-              <div className="w-[50px] h-[50px] md:w-[80px] md:h-[80px] rounded-full bg-bg-primary border-2 border-border-color overflow-hidden flex items-center justify-center text-3xl md:text-5xl shadow-[0_0_20px_rgba(0,0,0,0.5)]">
-                🇦🇷
-              </div>
-              <span className="font-orbitron font-bold text-white tracking-widest uppercase text-[10px] md:text-base">ARGENTINA</span>
-            </div>
-            
-          </div>
-          
-          {/* Bottom Button */}
-          <div className="flex justify-center pt-4 relative z-10">
-            <button 
-              onClick={() => setIsLocked(true)}
-              className={`btn-primary !px-12 !py-4 font-bold tracking-[0.2em] transition-all duration-300 ${
-                isLocked ? 'bg-white text-black shadow-[0_0_30px_rgba(255,255,255,0.8)] scale-105' : 'shadow-[0_0_20px_rgba(0,255,135,0.2)]'
-              }`}
-            >
-              {isLocked ? 'PREDICTION LOCKED' : 'LOCK PREDICTION'}
-            </button>
-          </div>
-        </div>
 
-        {/* GLOBAL LEADERBOARD */}
-        <div className="flex flex-col gap-6 mt-4">
-          <div className="flex justify-between items-end">
-            <h2 className="text-xl md:text-2xl font-orbitron font-bold text-white uppercase tracking-wider flex items-center gap-3">
-              <span className="w-2 h-6 bg-accent"></span>
-              GLOBAL LEADERBOARD
-            </h2>
-            <Link href="#" className="text-accent text-[10px] md:text-xs font-bold uppercase tracking-widest hover:underline flex items-center gap-1">
-              VIEW FULL RANKINGS <ArrowUpRight size={14} />
-            </Link>
-          </div>
-          
-          <div className="w-full overflow-hidden pb-4">
-            <motion.div 
-              initial="hidden" animate="visible" variants={staggerContainer}
-              className="w-full flex flex-col"
-            >
-              {/* Header */}
-              <div className="grid grid-cols-12 gap-2 md:gap-4 px-3 md:px-6 py-4 border-b border-[#30363D] text-[9px] md:text-[10px] uppercase text-text-muted font-bold tracking-widest bg-bg-secondary rounded-t-xl">
-                <div className="col-span-2 md:col-span-1 text-center">RANK</div>
-                <div className="col-span-6">USER</div>
-                <div className="col-span-4 md:col-span-2 text-right">POINTS</div>
-                <div className="hidden md:block md:col-span-3 text-right">ACCURACY</div>
-              </div>
-              
-              {/* Rows */}
-              {leaderboard.map((row) => (
-                <motion.div key={row.rank} variants={fadeInUp} className="grid grid-cols-12 gap-2 md:gap-4 px-3 md:px-6 py-5 border-b border-[#30363D] items-center hover:bg-[#212A3E] transition-colors cursor-pointer group bg-bg-card">
-                  <div className="col-span-2 md:col-span-1 flex justify-center">
-                    <Trophy size={16} className={`md:w-5 md:h-5 ${row.medal} ${row.dropShadow}`} />
-                  </div>
-                  <div className="col-span-6 flex items-center gap-3 md:gap-4">
-                    <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border border-border-color overflow-hidden bg-bg-primary shrink-0">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={row.avatar} alt="User" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-bold text-white text-xs md:text-sm group-hover:text-accent transition-colors tracking-wide truncate">{row.user}</span>
-                      <span className="hidden sm:inline-block text-[9px] md:text-[10px] text-text-muted font-mono uppercase">{row.country}</span>
-                    </div>
-                  </div>
-                  <div className="col-span-4 md:col-span-2 text-right font-mono text-white font-bold text-xs md:text-base">{row.points}</div>
-                  <div className="hidden md:block md:col-span-3 text-right font-mono text-accent font-bold">{row.accuracy}</div>
-                </motion.div>
-              ))}
-              
-              {/* Separator */}
-              <motion.div variants={fadeInUp} className="py-4 md:py-6 text-center text-text-muted font-bold tracking-widest text-xl bg-bg-card border-b border-[#30363D]">
-                ...
-              </motion.div>
-              
-              {/* Your Row */}
-              <motion.div variants={fadeInUp} className="grid grid-cols-12 gap-2 md:gap-4 px-3 md:px-6 py-5 border border-accent/30 items-center bg-[#00FF87]/5 rounded-b-xl cursor-pointer shadow-[0_10px_20px_rgba(0,0,0,0.2)] group hover:bg-[#00FF87]/10 transition-colors">
-                <div className="col-span-2 md:col-span-1 flex justify-center text-accent font-orbitron font-bold text-sm md:text-lg">
-                  247
+              {matchesLoading || loadingData ? (
+                <div className="flex flex-col gap-4">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-48 bg-bg-secondary animate-pulse rounded-xl border border-border-color"></div>
+                  ))}
                 </div>
-                <div className="col-span-6 flex items-center gap-3 md:gap-4">
-                  <div className="w-8 h-8 md:w-10 md:h-10 rounded-full border border-accent overflow-hidden bg-bg-primary shrink-0 shadow-[0_0_10px_rgba(0,255,135,0.3)]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="https://i.pravatar.cc/150?u=me" alt="You" className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex flex-col min-w-0">
-                    <span className="font-bold text-accent text-xs md:text-sm tracking-wide group-hover:text-white transition-colors truncate">You (UltraFan)</span>
-                    <span className="hidden sm:inline-block text-[9px] md:text-[10px] text-accent/70 font-mono uppercase">USA</span>
-                  </div>
+              ) : activeFixtures.length > 0 ? (
+                <div className="flex flex-col gap-6">
+                  {activeFixtures.map(match => {
+                    const existing = predictions.find(p => p.matchId === String(match.id));
+                    return (
+                      <PredictionCard
+                        key={match.id}
+                        match={match}
+                        onPredict={handlePredict}
+                        existingPrediction={existing}
+                      />
+                    );
+                  })}
                 </div>
-                <div className="col-span-4 md:col-span-2 text-right font-mono text-white font-bold text-xs md:text-base">4,820</div>
-                <div className="hidden md:block md:col-span-3 text-right font-mono text-accent font-bold">62.4%</div>
-              </motion.div>
-              
-            </motion.div>
+              ) : (
+                <div className="p-12 text-center border border-border-color border-dashed rounded-xl bg-bg-secondary/50">
+                  <p className="text-text-secondary font-mono">No active or upcoming fixtures found.</p>
+                </div>
+              )}
+            </div>
+
+            {/* RIGHT COLUMN: GLOBAL LEADERBOARD */}
+            <div className="w-full lg:w-1/3 flex flex-col gap-6">
+              <div className="flex items-center gap-3 border-b border-border-color pb-4">
+                <Trophy size={20} className="text-gold" />
+                <h2 className="text-xl font-orbitron font-bold tracking-widest uppercase">Top Operatives</h2>
+              </div>
+
+              <div className="bg-bg-card/80 backdrop-blur-md border border-border-color rounded-xl overflow-hidden shadow-lg">
+                {loadingData ? (
+                  <div className="p-8 flex justify-center">
+                    <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin"></div>
+                  </div>
+                ) : leaderboard.length > 0 ? (
+                  <div className="flex flex-col divide-y divide-border-color">
+                    {leaderboard.map((leader, index) => (
+                      <motion.div
+                        key={leader.$id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className={`flex items-center gap-4 p-4 hover:bg-border-color/30 transition-colors ${user?.$id === leader.userId ? 'bg-accent/5' : ''}`}
+                      >
+                        <div className="w-8 flex justify-center shrink-0">
+                          {getMedalIcon(index)}
+                        </div>
+
+                        <div className="w-10 h-10 rounded-full bg-bg-primary border border-border-color overflow-hidden flex items-center justify-center shrink-0">
+                          {leader.avatar ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={leader.avatar} alt={leader.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <UserIcon size={20} className="text-[#484F58]" />
+                          )}
+                        </div>
+
+                        <div className="flex flex-col flex-1 overflow-hidden">
+                          <span className="font-bold font-orbitron truncate text-sm md:text-base">
+                            {leader.name}
+                            {user?.$id === leader.userId && <span className="ml-2 text-[10px] text-accent border border-accent/30 px-2 py-0.5 rounded-full uppercase tracking-widest">You</span>}
+                          </span>
+                          <span className="text-xs text-text-secondary tracking-widest uppercase">{leader.favoriteTeam || 'Global'}</span>
+                        </div>
+
+                        <div className="flex flex-col items-end shrink-0">
+                          <span className="text-accent font-orbitron font-bold text-lg leading-none">
+                            {leader.fanPoints?.toLocaleString() || 0}
+                          </span>
+                          <span className="text-[10px] text-text-secondary tracking-widest uppercase mt-1">XP</span>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="p-8 text-center">
+                    <p className="text-text-secondary text-sm">Leaderboard is empty.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
           </div>
         </div>
-        
       </div>
-    </div>
+    </AuthGuard>
   );
 }

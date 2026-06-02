@@ -8,7 +8,7 @@ interface CommunityCardProps {
   streakColor?: string;
 }
 
-const CommunityCard: React.FC<CommunityCardProps> = ({ name, fans, streakColor = '#00FF87' }) => {
+const CommunityCard: React.FC<CommunityCardProps> = ({ name, fans, streakColor = 'var(--accent)' }) => {
   const slug = name.split(' ')[0].toLowerCase();
   return (
     <Link href={`/community/${slug}`} className="block no-underline">
@@ -33,7 +33,8 @@ const CommunityCard: React.FC<CommunityCardProps> = ({ name, fans, streakColor =
           <div className="flex -space-x-3">
             {[1, 2, 3].map(i => (
               <div key={i} className="w-8 h-8 rounded-full border-2 border-bg-card bg-bg-secondary flex items-center justify-center overflow-hidden">
-                <div className="w-full h-full bg-border-color"></div>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={`https://i.pravatar.cc/150?u=${slug}${i}`} alt="avatar" className="w-full h-full object-cover" />
               </div>
             ))}
             <div className="w-8 h-8 rounded-full border-2 border-bg-card bg-bg-secondary flex items-center justify-center text-[9px] font-bold text-text-secondary">

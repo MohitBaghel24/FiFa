@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/context/AuthContext";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 
 export const metadata: Metadata = {
   title: "ULTRA_FAN | Where The World Watches Together",
@@ -20,8 +21,8 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${inter.className} pb-16 md:pb-0`}
-        style={{ background: "#0D1117", margin: 0 }}>
+      <body className={`${inter.variable} ${outfit.variable} font-sans pb-16 md:pb-0`}
+        style={{ background: "var(--bg-primary)", margin: 0 }}>
         <ErrorSuppressor />
         <AuthProvider>
           <Navbar />

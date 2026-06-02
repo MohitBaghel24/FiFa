@@ -19,30 +19,38 @@ export function useLiveMatches(filter = "ALL") {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [source, setSource] = useState<"live" | "mock">("mock");
 
-  const fetchMatches = useCallback(async () => {
-    try {
-      const res = await fetch("/api/matches");
-      const data = await res.json();
-      setAllMatches(data.matches);
-      setSource(data.source);
-      setLastUpdated(new Date());
-    } catch (e) {
-      console.error("Failed to fetch matches", e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
+    const controller = new AbortController();
+
+    const fetchMatches = async () => {
+      try {
+        const res = await fetch("/api/matches", { signal: controller.signal });
+        const data = await res.json();
+        setAllMatches(data.matches);
+        setSource(data.source);
+        setLastUpdated(new Date());
+      } catch (e: any) {
+        if (e.name === "AbortError") return;
+        // Suppress generic network dropouts that trigger the Next.js error overlay
+        if (e.message !== "Load failed" && e.message !== "Failed to fetch") {
+          console.error("Failed to fetch matches", e);
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     const timeoutId = setTimeout(() => {
       fetchMatches();
     }, 0);
     const intervalId = setInterval(fetchMatches, 30000);
+    
     return () => {
       clearTimeout(timeoutId);
       clearInterval(intervalId);
+      controller.abort();
     };
-  }, [fetchMatches]);
+  }, []);
 
   const matches = filter === "ALL" ? allMatches
     : filter === "LIVE NOW" ? allMatches.filter(m => m.status === "LIVE")

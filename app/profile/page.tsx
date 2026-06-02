@@ -1,13 +1,10 @@
 "use client";
 
-import React, { use } from 'react';
+import React from 'react';
 import { Share2, Target, Activity, Award, Globe, Trophy, CircleDot, BarChart3, Lock, CheckCircle2, XCircle, MessageSquare } from 'lucide-react';
 import { BGPattern } from '@/components/ui/bg-pattern';
 
-
-export default function UserProfilePage({ params }: { params: Promise<{ userId: string }> }) {
-  const { userId } = use(params);
-
+export default function ProfilePage() {
   const stats = [
     { icon: <Target size={20} className="text-accent" />, label: 'PREDICTIONS', value: '4,821' },
     { icon: <Activity size={20} className="text-accent" />, label: 'ACCURACY', value: '68.4%' },
@@ -50,7 +47,7 @@ export default function UserProfilePage({ params }: { params: Promise<{ userId: 
       <BGPattern variant="dots" mask="fade-center" fill="var(--border)" />
 
       {/* HEADER BANNER */}
-      <div className="relative w-full h-[280px] bg-bg-secondary border-b border-border-color mt-0">
+      <div className="relative w-full h-[280px] bg-bg-secondary border-b border-border-color">
         {/* Background Image */}
         <div className="absolute inset-0 overflow-hidden">
           {/* eslint-disable-next-line @next/next/no-img-element */}

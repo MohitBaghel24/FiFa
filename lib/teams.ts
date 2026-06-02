@@ -59,3 +59,5 @@ export function getTeamById(id: string): Team | undefined {
 export function getTeamsByContinent(continent: string): Team[] {
   return WORLD_CUP_TEAMS.filter(team => team.continent.toUpperCase() === continent.toUpperCase());
 }
+
+export const ALL_TEAMS = WORLD_CUP_TEAMS;

@@ -20,7 +20,7 @@ export default function MatchCard({ match }: { match: Match }) {
         setJustScored(true);
         setPrevScore({ home: match.homeScore, away: match.awayScore });
       }, 0);
-      const timeout2 = setTimeout(() => setJustScored(false), 3000);
+      const timeout2 = setTimeout(() => setJustScored(false), 4000);
       return () => {
         clearTimeout(timeout1);
         clearTimeout(timeout2);
@@ -32,8 +32,8 @@ export default function MatchCard({ match }: { match: Match }) {
 
   return (
     <div style={{
-      background: "#1C2333",
-      border: `1px solid ${justScored ? "#00FF87" : "#30363D"}`,
+      background: "var(--bg-card)",
+      border: `1px solid ${justScored ? "var(--accent)" : "var(--border)"}`,
       borderRadius: 16,
       padding: 20,
       minWidth: 280,
@@ -53,12 +53,12 @@ export default function MatchCard({ match }: { match: Match }) {
           background: "rgba(0,255,135,0.05)",
           display: "flex", alignItems: "center",
           justifyContent: "center", zIndex: 10,
-          animation: "fadeOut 3s forwards",
+          animation: "fadeOut 4s forwards",
           pointerEvents: "none",
         }}>
           <span style={{
             fontSize: 24, fontWeight: 900,
-            color: "#00FF87", fontFamily: "monospace",
+            color: "var(--accent)", fontFamily: "monospace",
             letterSpacing: "0.2em",
           }}>⚽ GOAL!</span>
         </div>
@@ -70,7 +70,7 @@ export default function MatchCard({ match }: { match: Match }) {
         alignItems: "center",
       }}>
         <span style={{
-          fontSize: 11, color: "#8B949E",
+          fontSize: 11, color: "var(--text-secondary)",
           letterSpacing: "0.08em", textTransform: "uppercase",
         }}>
           {match.competition}
@@ -92,15 +92,15 @@ export default function MatchCard({ match }: { match: Match }) {
         )}
 
         {match.status === "UPCOMING" && (
-          <span style={{ fontSize: 11, color: "#00FF87" }}>
+          <span style={{ fontSize: 11, color: "var(--accent)" }}>
             {match.kickoff}
           </span>
         )}
 
         {match.status === "FT" && (
           <span style={{
-            fontSize: 11, color: "#8B949E",
-            background: "#30363D", padding: "2px 8px",
+            fontSize: 11, color: "var(--text-secondary)",
+            background: "var(--border)", padding: "2px 8px",
             borderRadius: 4,
           }}>FT</span>
         )}
@@ -122,7 +122,7 @@ export default function MatchCard({ match }: { match: Match }) {
             alt={match.homeTeam.fullName}
             style={{
               width: 56, height: 56, borderRadius: "50%",
-              objectFit: "cover", border: "2px solid #30363D"
+              objectFit: "cover", border: "2px solid var(--border)"
             }}
           />
           <span style={{
@@ -140,7 +140,7 @@ export default function MatchCard({ match }: { match: Match }) {
         }}>
           {match.status !== "UPCOMING" ? (
             <span style={{
-              fontSize: 36, fontWeight: 900, color: "#00FF87",
+              fontSize: 36, fontWeight: 900, color: "var(--accent)",
               fontFamily: "monospace", letterSpacing: "0.1em",
               lineHeight: 1,
             }}>
@@ -148,7 +148,7 @@ export default function MatchCard({ match }: { match: Match }) {
             </span>
           ) : (
             <span style={{
-              fontSize: 22, fontWeight: 700, color: "#8B949E",
+              fontSize: 22, fontWeight: 700, color: "var(--text-secondary)",
               fontFamily: "monospace",
             }}>VS</span>
           )}
@@ -165,7 +165,7 @@ export default function MatchCard({ match }: { match: Match }) {
             alt={match.awayTeam.fullName}
             style={{
               width: 56, height: 56, borderRadius: "50%",
-              objectFit: "cover", border: "2px solid #30363D"
+              objectFit: "cover", border: "2px solid var(--border)"
             }}
           />
           <span style={{
@@ -180,12 +180,12 @@ export default function MatchCard({ match }: { match: Match }) {
       {/* Progress bar (live only) */}
       {match.status === "LIVE" && (
         <div style={{
-          height: 3, background: "#30363D",
+          height: 3, background: "var(--border)",
           borderRadius: 2, overflow: "hidden",
         }}>
           <div style={{
             height: "100%", width: `${progress}%`,
-            background: "linear-gradient(90deg, #00FF87, #00CC6A)",
+            background: "var(--accent)",
             borderRadius: 2, transition: "width 1s ease",
           }} />
         </div>
@@ -197,7 +197,7 @@ export default function MatchCard({ match }: { match: Match }) {
         style={{
           display: "block", textAlign: "center",
           padding: "12px", borderRadius: 8,
-          background: "#00FF87", color: "#0D1117",
+          background: "var(--accent)", color: "var(--bg-primary)",
           fontWeight: 700, fontSize: 13,
           letterSpacing: "0.1em", textDecoration: "none",
           textTransform: "uppercase",

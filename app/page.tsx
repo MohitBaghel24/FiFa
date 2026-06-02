@@ -74,7 +74,7 @@ export default function Home() {
             </motion.div>
 
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 mt-6 w-full sm:w-auto">
-              <Link href="/" className="btn-primary w-full sm:w-auto shadow-[0_0_20px_rgba(0,255,135,0.2)] text-center flex items-center justify-center">WATCH LIVE</Link>
+              <Link href="/watch" className="btn-primary w-full sm:w-auto shadow-[0_0_20px_rgba(0,255,135,0.2)] text-center flex items-center justify-center">WATCH LIVE</Link>
               <Link href="/fanwall" className="btn-outline w-full sm:w-auto text-center flex items-center justify-center">JOIN COMMUNITY</Link>
             </motion.div>
           </motion.div>
@@ -103,30 +103,38 @@ export default function Home() {
 
       {/* 2. LIVE MATCHES SECTION */}
       <section style={{ padding: "80px 24px" }}>
-        
+
         {/* Section header */}
-        <div style={{ display:"flex", justifyContent:"space-between", 
-          alignItems:"flex-end", marginBottom: 32 }}>
+        <div style={{
+          display: "flex", justifyContent: "space-between",
+          alignItems: "flex-end", marginBottom: 32
+        }}>
           <div>
-            <h2 style={{ color:"white", fontSize:32, fontWeight:900,
-              letterSpacing:"0.05em", margin:"0 0 8px", 
-              textTransform:"uppercase" }}>
+            <h2 style={{
+              color: "var(--text-primary)", fontSize: 32, fontWeight: 900,
+              letterSpacing: "0.05em", margin: "0 0 8px",
+              textTransform: "uppercase"
+            }}>
               ACTIVE OPERATIONS
             </h2>
-            <div style={{ width:60, height:3, 
-              background:"#00FF87", borderRadius:2 }} />
+            <div style={{
+              width: 60, height: 3,
+              background: "var(--accent)", borderRadius: 2
+            }} />
           </div>
 
-          <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {source === "mock" && (
-              <span style={{ fontSize:11, background:"#332200", 
-                color:"#FFD700", padding:"3px 10px", 
-                borderRadius:20, letterSpacing:"0.08em" }}>
+              <span style={{
+                fontSize: 11, background: "#332200",
+                color: "#FFD700", padding: "3px 10px",
+                borderRadius: 20, letterSpacing: "0.08em"
+              }}>
                 DEMO DATA
               </span>
             )}
             {lastUpdated && (
-              <span style={{ fontSize:11, color:"#484F58" }}>
+              <span style={{ fontSize: 11, color: "#484F58" }}>
                 Updated {lastUpdated.toLocaleTimeString()}
               </span>
             )}
@@ -134,18 +142,20 @@ export default function Home() {
         </div>
 
         {/* Filter tabs */}
-        <div style={{ display:"flex", gap:8, marginBottom:28, 
-          overflowX:"auto", paddingBottom:4 }}>
+        <div style={{
+          display: "flex", gap: 8, marginBottom: 28,
+          overflowX: "auto", paddingBottom: 4
+        }}>
           {FILTERS.map(f => (
             <button key={f} onClick={() => setActiveFilter(f)}
               style={{
-                padding:"8px 16px", borderRadius:20, border:"1px solid",
-                borderColor: activeFilter===f ? "#00FF87" : "#30363D",
-                background: activeFilter===f ? "rgba(0,255,135,0.1)" : "transparent",
-                color: activeFilter===f ? "#00FF87" : "#8B949E",
-                fontSize:12, fontWeight:600, letterSpacing:"0.06em",
-                cursor:"pointer", whiteSpace:"nowrap",
-                textTransform:"uppercase",
+                padding: "8px 16px", borderRadius: 20, border: "1px solid",
+                borderColor: activeFilter === f ? "var(--accent)" : "var(--border)",
+                background: activeFilter === f ? "rgba(0,255,135,0.1)" : "transparent",
+                color: activeFilter === f ? "var(--accent)" : "#8B949E",
+                fontSize: 12, fontWeight: 600, letterSpacing: "0.06em",
+                cursor: "pointer", whiteSpace: "nowrap",
+                textTransform: "uppercase",
               }}>
               {f}
             </button>
@@ -154,26 +164,28 @@ export default function Home() {
 
         {/* Match cards - horizontal scroll */}
         {isLoading ? (
-          <div style={{ display:"flex", gap:16, overflowX:"auto", paddingBottom:8 }}>
-            {[1,2,3].map(i => (
-              <div key={i} style={{ 
-                minWidth:280, height:240, background:"#1C2333", 
-                borderRadius:16, border:"1px solid #30363D",
-                animation:"shimmer 1.5s infinite",
+          <div style={{ display: "flex", gap: 16, overflowX: "auto", paddingBottom: 8 }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{
+                minWidth: 280, height: 240, background: "var(--bg-card)",
+                borderRadius: 16, border: "1px solid var(--border)",
+                animation: "shimmer 1.5s infinite",
               }} />
             ))}
           </div>
         ) : matches.length === 0 ? (
-          <div style={{ textAlign:"center", padding:"60px 0", 
-            color:"#484F58", fontFamily:"monospace" }}>
+          <div style={{
+            textAlign: "center", padding: "60px 0",
+            color: "#484F58", fontFamily: "monospace"
+          }}>
             NO MATCHES FOUND FOR THIS FILTER
           </div>
         ) : (
-          <div style={{ 
-            display:"flex", gap:16, 
-            overflowX:"auto", paddingBottom:8,
-            scrollbarWidth:"thin",
-            scrollbarColor:"#00FF87 transparent",
+          <div style={{
+            display: "flex", gap: 16,
+            overflowX: "auto", paddingBottom: 8,
+            scrollbarWidth: "thin",
+            scrollbarColor: "var(--accent) transparent",
           }}>
             {matches.map((match) => (
               <MatchCard key={match.id} match={match} />

@@ -21,27 +21,27 @@ export default function TestPage() {
   }, []);
 
   const s: React.CSSProperties = {
-    minHeight:"100vh", background:"#0D1117",
-    color:"white", fontFamily:"monospace",
+    minHeight:"100vh", background:"var(--bg-primary)",
+    color:"var(--text-primary)", fontFamily:"monospace",
     padding:40, display:"flex",
     flexDirection:"column", gap:20,
   };
 
   return (
     <div style={s}>
-      <h1 style={{ color:"#00FF87", fontSize:24, letterSpacing:"0.1em" }}>
+      <h1 style={{ color:"var(--accent)", fontSize:24, letterSpacing:"0.1em" }}>
         SYSTEM DIAGNOSTICS
       </h1>
 
-      <div style={{ background:"#161B22", borderRadius:12,
-        border:"1px solid #30363D", padding:24, display:"flex",
+      <div style={{ background:"var(--bg-secondary)", borderRadius:12,
+        border:"1px solid var(--border)", padding:24, display:"flex",
         flexDirection:"column", gap:12 }}>
 
-        <p style={{ margin:0, color: dbOk ? "#00FF87" : "#FF4757" }}>
+        <p style={{ margin:0, color: dbOk ? "var(--accent)" : "#FF4757" }}>
           {dbOk ? "✅" : "❌"} APPWRITE DATABASE: {dbStatus}
         </p>
 
-        <p style={{ margin:0, color: isLoggedIn ? "#00FF87" : "#FFD700" }}>
+        <p style={{ margin:0, color: isLoggedIn ? "var(--accent)" : "#FFD700" }}>
           {isLoggedIn ? "✅" : "⚠️"} AUTH: {
             isLoggedIn
               ? `Logged in as ${user?.name} (${user?.email})`
@@ -58,7 +58,7 @@ export default function TestPage() {
         <button onClick={loginGoogle}
           style={{
             padding:"14px 32px", borderRadius:8, border:"none",
-            background:"#00FF87", color:"#0D1117",
+            background:"var(--accent)", color: "var(--bg-primary)",
             fontWeight:700, fontSize:16, cursor:"pointer",
             letterSpacing:"0.1em", width:"fit-content",
           }}>
@@ -68,8 +68,8 @@ export default function TestPage() {
 
       {isLoggedIn && (
         <div style={{ background:"#0D2818", borderRadius:8,
-          border:"1px solid #00FF87", padding:16 }}>
-          <p style={{ margin:0, color:"#00FF87" }}>
+          border:"1px solid var(--accent)", padding:16 }}>
+          <p style={{ margin:0, color:"var(--accent)" }}>
             ✅ Google Auth working! User: {user?.name}
           </p>
         </div>

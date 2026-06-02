@@ -4,17 +4,17 @@ const client = new Client()
   .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
   .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
 
-export const account  = new Account(client);
+export const account = new Account(client);
 export const databases = new Databases(client);
-export const storage  = new Storage(client);
+export const storage = new Storage(client);
 export { ID, Query, client };
 
 export const DB_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
-export const COL   = {
-  POSTS:       process.env.NEXT_PUBLIC_APPWRITE_POSTS_COLLECTION!,
-  MESSAGES:    process.env.NEXT_PUBLIC_APPWRITE_MESSAGES_COLLECTION!,
+export const COL = {
+  POSTS: process.env.NEXT_PUBLIC_APPWRITE_POSTS_COLLECTION!,
+  MESSAGES: process.env.NEXT_PUBLIC_APPWRITE_MESSAGES_COLLECTION!,
   PREDICTIONS: process.env.NEXT_PUBLIC_APPWRITE_PREDICTIONS_COLLECTION!,
-  USERS:       process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION!,
+  USERS: process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION!,
 };
 
 /* ── AUTH ─────────────────────────────── */
@@ -67,7 +67,7 @@ export async function getUserProfile(userId: string) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function updateUserProfile(userId: string, data: Record<string,any>) {
+export async function updateUserProfile(userId: string, data: Record<string, any>) {
   return databases.updateDocument(DB_ID, COL.USERS, userId, data);
 }
 
@@ -102,15 +102,20 @@ export async function likePost(postId: string, currentLikes: number) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function subscribeToNewPosts(callback: (post: any) => void) {
-  return client.subscribe(
-    `databases.${DB_ID}.collections.${COL.POSTS}.documents`,
-    (res) => {
-      if (res.events.includes(
-        `databases.${DB_ID}.collections.${COL.POSTS}.documents.*.create`
-      )) callback(res.payload);
-    }
-  );
+export function subscribeToNewPosts(callback: (payload: any, eventType: string) => void) {
+  // The channel string must exactly match: databases.[DB_ID].collections.[COLLECTION_ID].documents
+  const channel = `databases.${DB_ID}.collections.${COL.POSTS}.documents`;
+  
+  return client.subscribe(channel, (response) => {
+    const events = response.events;
+    const isCreate = events.some(e => e.includes('.create'));
+    const isUpdate = events.some(e => e.includes('.update'));
+    const isDelete = events.some(e => e.includes('.delete'));
+
+    if (isCreate) callback(response.payload, 'create');
+    if (isUpdate) callback(response.payload, 'update');
+    if (isDelete) callback(response.payload, 'delete');
+  });
 }
 
 /* ── CHAT MESSAGES ────────────────────── */
@@ -178,5 +183,22 @@ export async function getUserPredictions(userId: string) {
       Query.orderDesc("createdAt"),
     ]);
     return res.documents;
-  } catch { return []; }
+  } catch { 
+    return []; 
+  }
+}
+
+/* ── LEADERBOARD ──────────────────────── */
+
+export async function getLeaderboard(limit = 10) {
+  try {
+    const res = await databases.listDocuments(DB_ID, COL.USERS, [
+      Query.orderDesc("fanPoints"),
+      Query.limit(limit),
+    ]);
+    return res.documents;
+  } catch {
+    // Silently handle if db/collection doesn't exist yet
+    return [];
+  }
 }

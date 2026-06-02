@@ -37,14 +37,14 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
       <div
         onClick={e => e.stopPropagation()}
         style={{
-          background: "#161B22", border: "1px solid #30363D",
+          background: "var(--bg-secondary)", border: "1px solid var(--border)",
           borderRadius: 16, padding: 40, width: "100%", maxWidth: 400,
           display: "flex", flexDirection: "column", gap: 20,
         }}
       >
         {/* Header */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-          <h2 style={{ color: "#00FF87", fontFamily: "monospace",
+          <h2 style={{ color: "var(--accent)", fontFamily: "monospace",
             fontSize: 22, letterSpacing: "0.1em", margin: 0 }}>
             AUTHENTICATE
           </h2>
@@ -59,7 +59,7 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
           style={{
             display:"flex", alignItems:"center", justifyContent:"center",
             gap:12, padding:"12px 20px", borderRadius:8,
-            background:"white", color:"#0D1117", fontWeight:700,
+            background:"white", color: "var(--bg-primary)", fontWeight:700,
             fontSize:14, border:"none", cursor:"pointer",
             letterSpacing:"0.05em",
           }}
@@ -74,9 +74,9 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         </button>
 
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-          <div style={{ flex:1, height:1, background:"#30363D" }} />
+          <div style={{ flex:1, height:1, background:"var(--border)" }} />
           <span style={{ color:"#484F58", fontSize:12 }}>OR</span>
-          <div style={{ flex:1, height:1, background:"#30363D" }} />
+          <div style={{ flex:1, height:1, background:"var(--border)" }} />
         </div>
 
         {/* Mode toggle */}
@@ -85,9 +85,9 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
             <button key={m} onClick={() => setMode(m)}
               style={{
                 flex:1, padding:"8px", borderRadius:6, border:"1px solid",
-                borderColor: mode===m ? "#00FF87" : "#30363D",
+                borderColor: mode===m ? "var(--accent)" : "var(--border)",
                 background: mode===m ? "rgba(0,255,135,0.1)" : "transparent",
-                color: mode===m ? "#00FF87" : "#8B949E",
+                color: mode===m ? "var(--accent)" : "var(--text-secondary)",
                 fontFamily:"monospace", fontSize:12,
                 textTransform:"uppercase", letterSpacing:"0.08em",
                 cursor:"pointer",
@@ -101,17 +101,17 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         {mode === "register" && (
           <input value={name} onChange={e => setName(e.target.value)}
             placeholder="Username"
-            style={{ padding:"12px 16px", borderRadius:8, border:"1px solid #30363D",
-              background:"#0D1117", color:"white", fontSize:14, outline:"none" }} />
+            style={{ padding:"12px 16px", borderRadius:8, border:"1px solid var(--border)",
+              background:"var(--bg-primary)", color:"var(--text-primary)", fontSize:14, outline:"none" }} />
         )}
         <input value={email} onChange={e => setEmail(e.target.value)}
           placeholder="Email" type="email"
-          style={{ padding:"12px 16px", borderRadius:8, border:"1px solid #30363D",
-            background:"#0D1117", color:"white", fontSize:14, outline:"none" }} />
+          style={{ padding:"12px 16px", borderRadius:8, border:"1px solid var(--border)",
+            background:"var(--bg-primary)", color:"var(--text-primary)", fontSize:14, outline:"none" }} />
         <input value={password} onChange={e => setPassword(e.target.value)}
           placeholder="Password" type="password"
-          style={{ padding:"12px 16px", borderRadius:8, border:"1px solid #30363D",
-            background:"#0D1117", color:"white", fontSize:14, outline:"none" }} />
+          style={{ padding:"12px 16px", borderRadius:8, border:"1px solid var(--border)",
+            background:"var(--bg-primary)", color:"var(--text-primary)", fontSize:14, outline:"none" }} />
 
         {error && (
           <p style={{ color:"#FF4757", fontSize:13, margin:0 }}>{error}</p>
@@ -120,8 +120,8 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
         <button onClick={handleSubmit} disabled={loading}
           style={{
             padding:"14px", borderRadius:8, border:"none",
-            background: loading ? "#00CC6A" : "#00FF87",
-            color:"#0D1117", fontWeight:700, fontSize:15,
+            background: "var(--accent)",
+            color: "var(--bg-primary)", fontWeight:700, fontSize:15,
             letterSpacing:"0.1em", textTransform:"uppercase",
             cursor: loading ? "not-allowed" : "pointer",
           }}>

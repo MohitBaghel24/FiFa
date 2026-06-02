@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Montserrat:wght@400;600;700;800;900&display=swap');
+
 @import "tailwindcss";
 
 @theme {
@@ -18,9 +18,9 @@
   --color-gold: var(--gold);
   --color-silver: var(--silver);
   --color-bronze: var(--bronze);
-  
-  --font-orbitron: var(--font-orbitron), 'Montserrat', sans-serif;
-  --font-inter: var(--font-inter), 'Roboto', sans-serif;
+
+  --font-orbitron: var(--font-outfit), sans-serif;
+  --font-inter: var(--font-inter), sans-serif;
 }
 
 :root {
@@ -30,12 +30,12 @@
   --bg-card-hover: #212A3E;
   --accent: #00FF87;
   --accent-dim: #00CC6A;
-  --accent-glow: rgba(0,255,135,0.15);
+  --accent-glow: rgba(0, 255, 135, 0.15);
   --text-primary: #FFFFFF;
   --text-secondary: #8B949E;
   --text-muted: #484F58;
   --border: #30363D;
-  --border-accent: rgba(0,255,135,0.3);
+  --border-accent: rgba(0, 255, 135, 0.3);
   --danger: #FF4757;
   --gold: #FFD700;
   --silver: #C0C0C0;
@@ -55,12 +55,16 @@ body {
 }
 
 /* Typography */
-h1, h2, h3, .heading-font {
+h1,
+h2,
+h3,
+.heading-font {
   font-family: var(--font-orbitron), sans-serif;
 }
 
 h1 {
-  font-size: 2rem; /* Mobile first default */
+  font-size: 2rem;
+  /* Mobile first default */
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -90,9 +94,11 @@ small {
   h1 {
     font-size: 3rem;
   }
+
   h2 {
     font-size: 2rem;
   }
+
   h3 {
     font-size: 1.25rem;
   }
@@ -100,7 +106,7 @@ small {
 
 /* Components */
 .glass-card {
-  background: rgba(28,35,51,0.8);
+  background: rgba(28, 35, 51, 0.8);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border);
@@ -127,7 +133,7 @@ small {
 
 .btn-primary:hover {
   background: var(--accent-dim);
-  box-shadow: 0 0 20px rgba(0,255,135,0.4);
+  box-shadow: 0 0 20px rgba(0, 255, 135, 0.4);
 }
 
 .btn-outline {
@@ -165,7 +171,7 @@ small {
 }
 
 .badge-live {
-  background: rgba(255,71,87,0.15);
+  background: rgba(255, 71, 87, 0.15);
   color: var(--danger);
   border: 1px solid var(--danger);
   font-size: 0.65rem;
@@ -225,10 +231,13 @@ small {
 
 /* Animations */
 @keyframes pulse-red {
-  0%, 100% {
+
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
+
   50% {
     opacity: 0.5;
     transform: scale(1.5);
@@ -239,6 +248,7 @@ small {
   from {
     box-shadow: 0 0 10px var(--accent);
   }
+
   to {
     box-shadow: 0 0 25px var(--accent);
   }
@@ -249,6 +259,7 @@ small {
     transform: translateY(20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -259,6 +270,7 @@ small {
   from {
     transform: translateX(100%);
   }
+
   to {
     transform: translateX(-100%);
   }
@@ -277,31 +289,80 @@ small {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
 @keyframes float {
-  0% { transform: translate(0, 0); }
-  50% { transform: translate(15px, -15px); }
-  100% { transform: translate(-15px, 15px); }
+  0% {
+    transform: translate(0, 0);
+  }
+
+  50% {
+    transform: translate(15px, -15px);
+  }
+
+  100% {
+    transform: translate(-15px, 15px);
+  }
 }
 
 @keyframes shimmer {
-  0% { opacity: 0.4; }
-  50% { opacity: 0.8; }
-  100% { opacity: 0.4; }
+  0% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+
+  100% {
+    opacity: 0.4;
+  }
 }
 
 @keyframes fadeOut {
-  0% { opacity: 1; }
-  70% { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 1;
+  }
+
+  70% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+  }
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #30363D; border-radius: 2px; }
-::-webkit-scrollbar-thumb:hover { background: #00FF87; }
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #30363D;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #00FF87;
+}
+
+/* Hide number input spin buttons to fix text centering */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}

@@ -1,14 +1,18 @@
 "use client";
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import {
-  getCurrentUser, loginWithGoogle,
-  loginWithEmail, registerUser,
-  logoutUser, createUserProfile, getUserProfile
-} from "@/lib/appwrite";
+  createContext, useContext, useEffect,
+  useState, ReactNode, useCallback
+} from "react";
+import { account, databases, DB_ID, COL, ID } from "@/lib/appwrite";
+
+interface User {
+  $id: string;
+  name: string;
+  email: string;
+}
 
 interface AuthContextType {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  user: any | null;
+  user: User | null;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   profile: any | null;
   isLoading: boolean;
@@ -17,63 +21,88 @@ interface AuthContextType {
   loginEmail: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [user,      setUser]      = useState<any>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [profile,   setProfile]   = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    checkUser();
+  const refreshUser = useCallback(async () => {
+    try {
+      const u = await account.get();
+      setUser(u as User);
+
+      // Load profile
+      try {
+        const p = await databases.getDocument(DB_ID, COL.USERS, u.$id);
+        setProfile(p);
+      } catch {
+        // Profile doesn't exist yet — that's fine
+        setProfile(null);
+      }
+    } catch {
+      setUser(null);
+      setProfile(null);
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  async function checkUser() {
-    setIsLoading(true);
-    const u = await getCurrentUser();
-    setUser(u);
-    if (u) {
-      const p = await getUserProfile(u.$id);
-      if (!p) {
-        const newP = await createUserProfile(
-          u.$id, u.name, u.email
-        );
-        setProfile(newP);
-      } else {
-        setProfile(p);
-      }
+  // Check auth on every page load
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    refreshUser();
+  }, [refreshUser]);
+
+  function loginGoogle() {
+    // Save current page to return after login
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("returnTo", window.location.pathname);
     }
-    setIsLoading(false);
+    account.createOAuth2Session(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      "google" as any,
+      "http://localhost:3000/auth/callback",
+      "http://localhost:3000/"
+    );
   }
 
   async function loginEmail(email: string, password: string) {
-    await loginWithEmail(email, password);
-    await checkUser();
+    await account.createEmailPasswordSession(email, password);
+    await refreshUser();
   }
 
   async function register(email: string, password: string, name: string) {
-    await registerUser(email, password, name);
-    await checkUser();
+    await account.create(ID.unique(), email, password, name);
+    await loginEmail(email, password);
   }
 
   async function logout() {
-    await logoutUser();
+    try {
+      await account.deleteSession("current");
+    } catch (e) {
+      console.error(e);
+    }
     setUser(null);
     setProfile(null);
   }
 
   return (
     <AuthContext.Provider value={{
-      user, profile, isLoading,
+      user,
+      profile,
+      isLoading,
       isLoggedIn: !!user,
-      loginGoogle: loginWithGoogle,
-      loginEmail: loginEmail,
+      loginGoogle,
+      loginEmail,
       register,
       logout,
+      refreshUser,
     }}>
       {children}
     </AuthContext.Provider>

@@ -14,7 +14,10 @@ const FanPostCard: React.FC<FanPostCardProps> = ({ user, handle, time, content, 
   return (
     <div className="border-b border-border-color py-6 last:border-0 hover:bg-bg-secondary/40 transition-colors px-4 -mx-4 rounded-xl cursor-pointer group">
       <div className="flex items-start gap-4">
-        <div className="w-12 h-12 rounded-full bg-border-color flex-shrink-0"></div>
+        <div className="w-12 h-12 rounded-full bg-border-color flex-shrink-0 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={`https://i.pravatar.cc/150?u=${handle}`} alt={user} className="w-full h-full object-cover" />
+        </div>
         <div className="flex-1">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2 mb-2">
             <span className="font-bold text-sm text-white group-hover:text-accent transition-colors">{user}</span>
